@@ -11,3 +11,5 @@ coverage/
 *.docx
 .antigravity/
 .vscode/
+scripts/*.png
+scripts/*.log

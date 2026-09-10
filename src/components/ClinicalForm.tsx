@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Patient, TcControleItem } from '../App';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Search, Loader2, Check, AlertCircle, FileText, X } from 'lucide-react';
 
 interface ClinicalFormProps {
   patient: Patient;
@@ -17,6 +17,95 @@ export const ClinicalForm: React.FC<ClinicalFormProps> = ({
   handleDateMask,
   theme,
 }) => {
+  const [isSearchingTele, setIsSearchingTele] = useState(false);
+  const [teleExams, setTeleExams] = useState<any[] | null>(null);
+  const [teleError, setTeleError] = useState<string | null>(null);
+  const [showTeleModal, setShowTeleModal] = useState(false);
+  const [selectedExams, setSelectedExams] = useState<Record<string, boolean>>({});
+
+  const handleBuscarTelemedicina = async () => {
+    if (!patient.name || patient.name.trim() === '') {
+      alert('Por favor, informe o nome do paciente antes de buscar laudos no portal.');
+      return;
+    }
+
+    setShowTeleModal(true);
+    setIsSearchingTele(true);
+    setTeleError(null);
+    setTeleExams(null);
+
+    try {
+      const res = await fetch('/api/telemedicina/buscar-laudos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patientName: patient.name })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Erro ao consultar o Portal Telemedicina.');
+      }
+
+      setTeleExams(data.exams || []);
+      const initialSelected: Record<string, boolean> = {};
+      (data.exams || []).forEach((ex: any) => {
+        initialSelected[ex.examId] = true;
+      });
+      setSelectedExams(initialSelected);
+    } catch (err: any) {
+      setTeleError(err?.message || 'Falha na comunicação com o portal.');
+    } finally {
+      setIsSearchingTele(false);
+    }
+  };
+
+  const handleConfirmarLaudos = () => {
+    if (!teleExams || teleExams.length === 0) {
+      setShowTeleModal(false);
+      return;
+    }
+
+    const approved = teleExams.filter(ex => selectedExams[ex.examId]);
+    if (approved.length === 0) {
+      setShowTeleModal(false);
+      return;
+    }
+
+    let admissionExam = approved.find(ex => !ex.isAngio) || approved[0];
+    let remaining = approved.filter(ex => ex.examId !== admissionExam.examId);
+    let angioExam = approved.find(ex => ex.isAngio);
+
+    const updatedPatient: Patient = {
+      ...patient
+    };
+
+    if (admissionExam) {
+      updatedPatient.tcAdmissaoData = admissionExam.date || patient.tcAdmissaoData;
+      updatedPatient.tcAdmissaoLaudo = admissionExam.laudo || patient.tcAdmissaoLaudo;
+    }
+
+    if (angioExam) {
+      updatedPatient.angiotomoDescricao = angioExam.laudo || patient.angiotomoDescricao;
+    }
+
+    const controlExams = remaining.filter(ex => ex.examId !== angioExam?.examId);
+    if (controlExams.length > 0) {
+      const newControls: TcControleItem[] = controlExams.map(ex => ({
+        id: 'tc-' + ex.examId + '-' + Date.now(),
+        data: ex.date,
+        laudo: ex.laudo
+      }));
+      updatedPatient.tcControles = [...(patient.tcControles || []), ...newControls];
+      if (!updatedPatient.tcControleData && newControls.length > 0) {
+        updatedPatient.tcControleData = newControls[0].data;
+        updatedPatient.tcControleLaudo = newControls[0].laudo;
+      }
+    }
+
+    updatePatient(updatedPatient);
+    setShowTeleModal(false);
+  };
+
   const addTcControle = () => {
     const newId = 'tc-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
     const newItems = [...(patient.tcControles || []), { id: newId, data: '', laudo: '' }];
@@ -290,8 +379,17 @@ export const ClinicalForm: React.FC<ClinicalFormProps> = ({
 
       {/* SEÇÃO 3: HISTÓRICO E EXAMES */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200/60 space-y-4 shadow-sm text-left lg:col-span-1 md:col-span-2">
-        <div className="flex items-center gap-1.5 pb-2 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
           <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Histórico & Exames de Imagem</span>
+          <button
+            type="button"
+            onClick={handleBuscarTelemedicina}
+            className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[9.5px] font-black uppercase shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer hover:-translate-y-0.5"
+            title="Acessar o Portal Telemedicina e buscar os laudos deste paciente"
+          >
+            <Search size={11} />
+            <span>Buscar Laudos (Portal)</span>
+          </button>
         </div>
 
         {/* TC Admissão */}
@@ -412,6 +510,169 @@ export const ClinicalForm: React.FC<ClinicalFormProps> = ({
           </div>
         </div>
       </div>
+
+      {/* MODAL PORTAL TELEMEDICINA */}
+      {showTeleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs text-left">
+          <div className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] border border-slate-200">
+            {/* Header */}
+            <div className="bg-blue-600 px-6 py-4 text-white flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-white/10 rounded-xl">
+                  <Search size={20} />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm uppercase tracking-wider">Portal Telemedicina — Laudos</h3>
+                  <p className="text-[11px] opacity-85 font-medium">Paciente: <strong>{patient.name || 'Sem nome'}</strong></p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTeleModal(false)}
+                className="p-1 rounded-lg hover:bg-white/10 transition-colors text-white/80 hover:text-white cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto space-y-4 bg-slate-50 flex-1">
+              {isSearchingTele && (
+                <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
+                  <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+                  <div>
+                    <h4 className="font-black text-slate-700 text-xs uppercase tracking-wide">Acessando Portal Telemedicina...</h4>
+                    <p className="text-[11px] text-slate-400 mt-1 max-w-md">
+                      Efetuando login, buscando exames de <strong>{patient.name}</strong> e baixando os laudos liberados.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {teleError && !isSearchingTele && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl space-y-2">
+                  <div className="flex items-center gap-2 text-red-700 font-bold text-xs">
+                    <AlertCircle size={16} />
+                    <span>Não foi possível carregar os laudos</span>
+                  </div>
+                  <p className="text-[11px] text-red-600">{teleError}</p>
+                  <button
+                    type="button"
+                    onClick={handleBuscarTelemedicina}
+                    className="mt-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all uppercase cursor-pointer"
+                  >
+                    Tentar Novamente
+                  </button>
+                </div>
+              )}
+
+              {!isSearchingTele && !teleError && teleExams && teleExams.length === 0 && (
+                <div className="py-12 flex flex-col items-center justify-center text-center space-y-3 bg-white rounded-xl border border-dashed border-slate-200">
+                  <FileText className="w-10 h-10 text-slate-300" />
+                  <div>
+                    <h4 className="font-black text-slate-600 text-xs uppercase tracking-wide">Nenhum laudo encontrado</h4>
+                    <p className="text-[11px] text-slate-400 mt-1 max-w-sm">
+                      Não foram encontrados laudos liberados de tomografia com o nome <strong>{patient.name}</strong> no portal.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {!isSearchingTele && !teleError && teleExams && teleExams.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs font-black text-slate-700 uppercase tracking-wide">
+                      {teleExams.length} laudo(s) de tomografia encontrado(s):
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-bold">Ordenados por data</span>
+                  </div>
+
+                  {teleExams.map((ex, index) => {
+                    const isSelected = selectedExams[ex.examId] ?? true;
+                    const isFirst = index === 0;
+                    return (
+                      <div
+                        key={ex.examId}
+                        onClick={() => setSelectedExams({ ...selectedExams, [ex.examId]: !isSelected })}
+                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-white border-blue-400 shadow-sm'
+                            : 'bg-slate-100 border-slate-200 opacity-60'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => {}}
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 pointer-events-none"
+                            />
+                            <div>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-black text-slate-800 text-xs uppercase">{ex.type}</span>
+                                {isFirst && !ex.isAngio && (
+                                  <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md text-[9px] font-black uppercase tracking-wider">
+                                    TC de Admissão
+                                  </span>
+                                )}
+                                {(!isFirst || ex.isAngio) && !ex.isAngio && (
+                                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md text-[9px] font-black uppercase tracking-wider">
+                                    TC de Controle
+                                  </span>
+                                )}
+                                {ex.isAngio && (
+                                  <span className="px-2 py-0.5 bg-purple-100 text-purple-800 rounded-md text-[9px] font-black uppercase tracking-wider">
+                                    Angiotomografia
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-slate-500 font-bold mt-0.5">
+                                Data: <strong>{ex.date}</strong> | ID: {ex.examId}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Prévia do texto do laudo */}
+                        <div className="mt-2.5 p-2.5 bg-slate-50 border border-slate-100 rounded-lg max-h-28 overflow-y-auto text-[11px] text-slate-600 whitespace-pre-line font-mono custom-scrollbar">
+                          {ex.laudo}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            {!isSearchingTele && teleExams && teleExams.length > 0 && (
+              <div className="p-4 bg-slate-100 border-t border-slate-200 flex items-center justify-between shrink-0">
+                <span className="text-[11px] text-slate-500 font-medium">
+                  A TC mais antiga preencherá a <strong>Admissão</strong> e as demais as <strong>Controles</strong>.
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowTeleModal(false)}
+                    className="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 font-bold hover:bg-slate-200 transition-colors uppercase text-xs cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmarLaudos}
+                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black transition-all uppercase text-xs shadow-md flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                  >
+                    <Check size={14} strokeWidth={2.5} />
+                    <span>Confirmar e Inserir na Ficha</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
