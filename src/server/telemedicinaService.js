@@ -30,13 +30,40 @@ export function formatToDDMMAA(dateStr) {
 
 export function cleanLaudoText(rawText) {
   if (!rawText) return '';
-  let text = rawText;
+  let text = rawText.trim();
 
-  // Remove paginação e rodapés comuns do Portal Telemedicina
+  // 1. Remove paginação, rodapés e metadados comuns do Portal Telemedicina
   text = text.replace(/página\s+\d+\s+de\s*\d+[\s\S]*$/i, '');
   text = text.replace(/--\s*\d+\s*of\s*\d+\s*--[\s\S]*$/i, '');
   text = text.replace(/Paciente\s+[^\n]+Atendimento\s+\d+[\s\S]*$/i, '');
   text = text.replace(/Data\s+de\s+Nascimento\s+[^\n]+Data\s+Laudo[\s\S]*$/i, '');
+  text = text.replace(/Assinado\s+digitalmente\s+por[\s\S]*$/i, '');
+
+  // 2. Extrai Título (tipo do exame) e Resultado, removendo o bloco de TÉCNICA
+  // Identifica TÉCNICA, TECNICA, METODOLOGIA, MÉTODO, PROTOCOLO
+  // Seguido pelo marcador de resultado: ANÁLISE, RESULTADO(S), RELATÓRIO, LAUDO, ACHADOS, DESCRIÇÃO
+  const patternComMarcador = /^([\s\S]*?)(?:\r?\n|\s)+(?:T[EÉ]CNICA(?:\s+DO\s+EXAME)?|M[EÉ]TODO(?:LOGIA)?|PROTOCOLO)\s*:?[\s\S]*?(?:(?:\r?\n|\s)+(?:AN[AÁ]LISE|RESULTADOS?|RELAT[OÓ]RIO|LAUDO|ACHADOS|DESCRI[CÇ][AÃ]O)\s*:?\s*)([\s\S]*)$/i;
+
+  const match = text.match(patternComMarcador);
+  if (match) {
+    const titleLines = match[1]
+      .split(/\r?\n/)
+      .map(l => l.trim())
+      .filter(Boolean);
+    const title = titleLines.join(' ').replace(/\s+/g, ' ').trim();
+    let result = match[2].trim().replace(/^[:\s]+/, '');
+    if (result.startsWith('-') && !result.startsWith('- ')) {
+      result = '- ' + result.substring(1).trim();
+    }
+    return `${title}\n\n${result}`;
+  }
+
+  // Fallback: se houver TÉCNICA:... sem o marcador comum após, remove o bloco de técnica até duas quebras de linha
+  const fallbackMatch = text.match(/^([\s\S]*?)(?:\r?\n|\s)+(?:T[EÉ]CNICA(?:\s+DO\s+EXAME)?|M[EÉ]TODO(?:LOGIA)?|PROTOCOLO)\s*:?[\s\S]*?(?:\r?\n\r?\n)([\s\S]*)$/i);
+  if (fallbackMatch) {
+    const title = fallbackMatch[1].split(/\r?\n/).map(l => l.trim()).filter(Boolean).join(' ').trim();
+    return `${title}\n\n${fallbackMatch[2].trim()}`;
+  }
 
   return text.trim();
 }
