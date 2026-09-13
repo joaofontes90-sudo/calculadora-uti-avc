@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Patient, TcControleItem } from '../App';
+import { Patient, TcControleItem, isCranialTc } from '../App';
 import { Plus, Trash2, Search, Loader2, Check, AlertCircle, FileText, X } from 'lucide-react';
 
 interface ClinicalFormProps {
@@ -71,7 +71,8 @@ export const ClinicalForm: React.FC<ClinicalFormProps> = ({
       return;
     }
 
-    let admissionExam = approved.find(ex => !ex.isAngio) || approved[0];
+    // Prioriza tomografia de crânio para a TC de Admissão
+    let admissionExam = approved.find(ex => !ex.isAngio && isCranialTc(ex.laudo || ex.type)) || approved.find(ex => !ex.isAngio) || approved[0];
     let remaining = approved.filter(ex => ex.examId !== admissionExam.examId);
     let angioExam = approved.find(ex => ex.isAngio);
 

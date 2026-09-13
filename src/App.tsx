@@ -548,6 +548,72 @@ export const getLastFilledPageLists = (lists: DailyChecklist[]): { pageLists: Da
   };
 };
 
+export const isCranialTc = (laudo?: string, defaultIfEmpty = true): boolean => {
+  if (!laudo || !laudo.trim()) return defaultIfEmpty;
+  const upper = laudo.toUpperCase();
+  const hasCranial = /CR[AÁÂ]NIO|ENC[EÉ]FAL|CEREBR|VENTR[IÍ]CUL|CISTERN|MEN[IÍ]NG|SUBARACN|ISQUEMIA CEREBRAL|AVC/i.test(upper);
+  const hasNonCranial = /T[OÓ]RAX|ABDOM|PELV|PULM[AÃ]O|PULMONAR|PLEUR|MEDIAST|LOMBAR|CERVICAL|DORSAL/i.test(upper);
+  if (hasNonCranial && !hasCranial) return false;
+  return true;
+};
+
+export const getFirstAndLastCranialTcs = (p: Patient) => {
+  let firstData = '';
+  let firstLaudo = '';
+  let firstLabel = 'TC de Crânio Admissão';
+
+  let lastData = '';
+  let lastLaudo = '';
+  let lastLabel = 'TC de Crânio Controle';
+
+  // 1. Verifica se a TC de Admissão é de crânio
+  if (isCranialTc(p.tcAdmissaoLaudo)) {
+    firstData = p.tcAdmissaoData || '';
+    firstLaudo = p.tcAdmissaoLaudo || '';
+  }
+
+  // 2. Filtra todas as tomografias de controle que sejam de crânio (exclui tórax/abdome)
+  const cranialControles = (p.tcControles || [])
+    .map((tc, idx) => ({ tc, idx }))
+    .filter(item => Boolean(item.tc.data || item.tc.laudo) && isCranialTc(item.tc.laudo));
+
+  // Se a admissão não foi de crânio mas há controles de crânio, usa o primeiro controle como primeiro
+  if (!firstData && !firstLaudo && cranialControles.length > 0) {
+    const first = cranialControles[0];
+    firstData = first.tc.data || '';
+    firstLaudo = first.tc.laudo || '';
+    firstLabel = `TC de Crânio #${first.idx + 1} (Primeira)`;
+
+    if (cranialControles.length > 1) {
+      const last = cranialControles[cranialControles.length - 1];
+      lastData = last.tc.data || '';
+      lastLaudo = last.tc.laudo || '';
+      lastLabel = `TC de Crânio #${last.idx + 1} (Última)`;
+    }
+  } else if (cranialControles.length > 0) {
+    const last = cranialControles[cranialControles.length - 1];
+    lastData = last.tc.data || '';
+    lastLaudo = last.tc.laudo || '';
+    lastLabel = cranialControles.length > 1
+      ? `TC de Crânio Controle #${last.idx + 1} (Última)`
+      : `TC de Crânio Controle #${last.idx + 1}`;
+  } else if (p.tcControleData || p.tcControleLaudo) {
+    if (isCranialTc(p.tcControleLaudo)) {
+      lastData = p.tcControleData || '';
+      lastLaudo = p.tcControleLaudo || '';
+    }
+  }
+
+  return {
+    firstData,
+    firstLaudo,
+    firstLabel,
+    lastData,
+    lastLaudo,
+    lastLabel
+  };
+};
+
 // --- Main Patient Component ---
 
 export interface TcControleItem {
@@ -1916,56 +1982,34 @@ const PatientCard = ({
         </div>
       </div>
 
-      <div class="section-title">III. Exames de Imagem de Entrada & Controle</div>
-      <div class="grid">
-        <div class="field col-3">
-          <span class="field-label">TC Admissão (Data)</span>
-          <span class="field-value">${getVal(patient.tcAdmissaoData, '70%')}</span>
-        </div>
-        <div class="field col-9">
-          <span class="field-label">TC Admissão (Laudo)</span>
-          <span class="field-value">${getVal(patient.tcAdmissaoLaudo, '95%')}</span>
-        </div>
-      </div>
-      <div class="grid">
-        <div class="field col-12">
-          <span class="field-label">AngioTC / Doppler Transcraniano (Descrição)</span>
-          <span class="field-value">${getVal(patient.angiotomoDescricao, '95%')}</span>
-        </div>
-      </div>
       ${(() => {
-        if (patient.tcControles && patient.tcControles.length > 0) {
-          const filledIndices = patient.tcControles
-            .map((tc, idx) => ({ tc, idx }))
-            .filter(item => Boolean(item.tc.data || item.tc.laudo));
-          const targetItem = filledIndices.length > 0
-            ? filledIndices[filledIndices.length - 1]
-            : { tc: patient.tcControles[patient.tcControles.length - 1], idx: patient.tcControles.length - 1 };
-          const label = patient.tcControles.length > 1
-            ? `TC Controle #${targetItem.idx + 1} (Última)`
-            : `TC Controle #${targetItem.idx + 1}`;
-          return `
-            <div class="grid" style="margin-top: 4px;">
-              <div class="field col-3">
-                <span class="field-label">${label} (Data)</span>
-                <span class="field-value">${getVal(targetItem.tc.data, '70%')}</span>
-              </div>
-              <div class="field col-9">
-                <span class="field-label">${label} (Laudo)</span>
-                <span class="field-value">${getVal(targetItem.tc.laudo, '95%')}</span>
-              </div>
-            </div>
-          `;
-        }
+        const cranialTcs = getFirstAndLastCranialTcs(patient);
         return `
+          <div class="section-title">III. Exames de Imagem de Entrada & Controle (Apenas Crânio)</div>
           <div class="grid">
             <div class="field col-3">
-              <span class="field-label">TC Controle (Data)</span>
-              <span class="field-value">${getVal(patient.tcControleData, '70%')}</span>
+              <span class="field-label">${cranialTcs.firstLabel} (Data)</span>
+              <span class="field-value">${getVal(cranialTcs.firstData, '70%')}</span>
             </div>
             <div class="field col-9">
-              <span class="field-label">TC Controle (Laudo)</span>
-              <span class="field-value">${getVal(patient.tcControleLaudo, '95%')}</span>
+              <span class="field-label">${cranialTcs.firstLabel} (Laudo)</span>
+              <span class="field-value">${getVal(cranialTcs.firstLaudo, '95%')}</span>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="field col-12">
+              <span class="field-label">AngioTC / Doppler Transcraniano (Descrição)</span>
+              <span class="field-value">${getVal(patient.angiotomoDescricao, '95%')}</span>
+            </div>
+          </div>
+          <div class="grid" style="margin-top: 4px;">
+            <div class="field col-3">
+              <span class="field-label">${cranialTcs.lastLabel} (Data)</span>
+              <span class="field-value">${getVal(cranialTcs.lastData, '70%')}</span>
+            </div>
+            <div class="field col-9">
+              <span class="field-label">${cranialTcs.lastLabel} (Laudo)</span>
+              <span class="field-value">${getVal(cranialTcs.lastLaudo, '95%')}</span>
             </div>
           </div>
         `;
@@ -3584,56 +3628,34 @@ export default function InfusionApp() {
             </div>
           </div>
 
-          <div class="section-title">III. Exames de Imagem de Entrada & Controle</div>
-          <div class="grid">
-            <div class="field col-3">
-              <span class="field-label">TC Admissão (Data)</span>
-              <span class="field-value">${getVal(patient.tcAdmissaoData, '70%')}</span>
-            </div>
-            <div class="field col-9">
-              <span class="field-label">TC Admissão (Laudo)</span>
-              <span class="field-value">${getVal(patient.tcAdmissaoLaudo, '95%')}</span>
-            </div>
-          </div>
-          <div class="grid">
-            <div class="field col-12">
-              <span class="field-label">AngioTC / Doppler Transcraniano (Descrição)</span>
-              <span class="field-value">${getVal(patient.angiotomoDescricao, '95%')}</span>
-            </div>
-          </div>
           ${(() => {
-            if (patient.tcControles && patient.tcControles.length > 0) {
-              const filledIndices = patient.tcControles
-                .map((tc, idx) => ({ tc, idx }))
-                .filter(item => Boolean(item.tc.data || item.tc.laudo));
-              const targetItem = filledIndices.length > 0
-                ? filledIndices[filledIndices.length - 1]
-                : { tc: patient.tcControles[patient.tcControles.length - 1], idx: patient.tcControles.length - 1 };
-              const label = patient.tcControles.length > 1
-                ? `TC Controle #${targetItem.idx + 1} (Última)`
-                : `TC Controle #${targetItem.idx + 1}`;
-              return `
-                <div class="grid" style="margin-top: 4px;">
-                  <div class="field col-3">
-                    <span class="field-label">${label} (Data)</span>
-                    <span class="field-value">${getVal(targetItem.tc.data, '70%')}</span>
-                  </div>
-                  <div class="field col-9">
-                    <span class="field-label">${label} (Laudo)</span>
-                    <span class="field-value">${getVal(targetItem.tc.laudo, '95%')}</span>
-                  </div>
-                </div>
-              `;
-            }
+            const cranialTcs = getFirstAndLastCranialTcs(patient);
             return `
+              <div class="section-title">III. Exames de Imagem de Entrada & Controle (Apenas Crânio)</div>
               <div class="grid">
                 <div class="field col-3">
-                  <span class="field-label">TC Controle (Data)</span>
-                  <span class="field-value">${getVal(patient.tcControleData, '70%')}</span>
+                  <span class="field-label">${cranialTcs.firstLabel} (Data)</span>
+                  <span class="field-value">${getVal(cranialTcs.firstData, '70%')}</span>
                 </div>
                 <div class="field col-9">
-                  <span class="field-label">TC Controle (Laudo)</span>
-                  <span class="field-value">${getVal(patient.tcControleLaudo, '95%')}</span>
+                  <span class="field-label">${cranialTcs.firstLabel} (Laudo)</span>
+                  <span class="field-value">${getVal(cranialTcs.firstLaudo, '95%')}</span>
+                </div>
+              </div>
+              <div class="grid">
+                <div class="field col-12">
+                  <span class="field-label">AngioTC / Doppler Transcraniano (Descrição)</span>
+                  <span class="field-value">${getVal(patient.angiotomoDescricao, '95%')}</span>
+                </div>
+              </div>
+              <div class="grid" style="margin-top: 4px;">
+                <div class="field col-3">
+                  <span class="field-label">${cranialTcs.lastLabel} (Data)</span>
+                  <span class="field-value">${getVal(cranialTcs.lastData, '70%')}</span>
+                </div>
+                <div class="field col-9">
+                  <span class="field-label">${cranialTcs.lastLabel} (Laudo)</span>
+                  <span class="field-value">${getVal(cranialTcs.lastLaudo, '95%')}</span>
                 </div>
               </div>
             `;
