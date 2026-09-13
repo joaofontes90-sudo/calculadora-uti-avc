@@ -131,6 +131,15 @@ export function getAutoFilledColumn(prevList: DailyChecklist): Partial<DailyChec
     checklistDieta: prevList.checklistDieta || '',
     checklistDietaTipo: prevList.checklistDietaTipo || '',
     checklistDietaInicio: prevList.checklistDietaInicio || '',
+
+    // Antiagregante e Anticoagulante (manter do último checklist)
+    checklistAntiagregante: prevList.checklistAntiagregante || '',
+    checklistAnticoagulante: prevList.checklistAnticoagulante || '',
+
+    // Lesão por Pressão / Escaras (manter do último checklist)
+    checklistEscaras: prevList.checklistEscaras || '',
+    checklistEscarasLocal: prevList.checklistEscarasLocal || '',
+    checklistEscarasAspecto: prevList.checklistEscarasAspecto || '',
   };
 }
 
@@ -394,9 +403,9 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
     let autoFilledFields: Partial<DailyChecklist> = {};
 
     if (isEnteringDateInNewColumn) {
-      // 1) Copy neurological assessment, ventilation, VM days, antibiotics, venous access, diet, and pending/conducts from previous column if activeIndex > 0
+      // 1) Copy neurological assessment, ventilation, VM days, antibiotics, venous access, diet, antiplatelet, anticoagulant, pressure sores, and pending/conducts from previous column if activeIndex > 0
       if (activeIndex > 0) {
-        const prevList = dailyChecklists[activeIndex - 1];
+        const prevList = [...dailyChecklists.slice(0, activeIndex)].reverse().find(item => Boolean(item.checklistData && item.checklistData.trim() !== '')) || dailyChecklists[activeIndex - 1];
         if (prevList) {
           autoFilledFields = getAutoFilledColumn(prevList);
         }
@@ -524,8 +533,8 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
       checklistFebreTemp: updatedPatient.checklistFebreTemp,
       checklistAntibiotico: getFieldVal('checklistAntibiotico', ''),
       checklistAntibioticoText: getFieldVal('checklistAntibioticoText', ''),
-      checklistAntiagregante: updatedPatient.checklistAntiagregante,
-      checklistAnticoagulante: updatedPatient.checklistAnticoagulante,
+      checklistAntiagregante: getFieldVal('checklistAntiagregante', ''),
+      checklistAnticoagulante: getFieldVal('checklistAnticoagulante', ''),
       checklistAcessoLocal: getFieldVal('checklistAcessoLocal', ''),
       checklistAcessoDia: getFieldVal('checklistAcessoDia', ''),
       checklistDieta: getFieldVal('checklistDieta', ''),
@@ -533,9 +542,9 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
       checklistDietaInicio: getFieldVal('checklistDietaInicio', ''),
       checklistEvacuacoes: updatedPatient.checklistEvacuacoes,
       checklistEvacuacoesAspecto: updatedPatient.checklistEvacuacoesAspecto,
-      checklistEscaras: updatedPatient.checklistEscaras,
-      checklistEscarasLocal: updatedPatient.checklistEscarasLocal,
-      checklistEscarasAspecto: updatedPatient.checklistEscarasAspecto,
+      checklistEscaras: getFieldVal('checklistEscaras', ''),
+      checklistEscarasLocal: getFieldVal('checklistEscarasLocal', ''),
+      checklistEscarasAspecto: getFieldVal('checklistEscarasAspecto', ''),
       checklistBalançoHidrico: updatedPatient.checklistBalançoHidrico,
       checklistDiurese: updatedPatient.checklistDiurese,
       checklistPh: updatedPatient.checklistPh,
@@ -868,7 +877,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                   <option value="RASS: +2">RASS +2 (Agitado)</option>
                   <option value="RASS: +1">RASS +1 (Inquieto)</option>
                   <option value="RASS: 0">RASS 0 (Alerta e Calmo)</option>
-                  <option value="RASS: -1">RASS -1 (Somnolento)</option>
+                  <option value="RASS: -1">RASS -1 (Sonolento)</option>
                   <option value="RASS: -2">RASS -2 (Sedação Leve)</option>
                   <option value="RASS: -3">RASS -3 (Sedação Moderada)</option>
                   <option value="RASS: -4">RASS -4 (Sedação Profunda)</option>

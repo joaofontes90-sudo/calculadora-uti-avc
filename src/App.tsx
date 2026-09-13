@@ -1933,19 +1933,31 @@ const PatientCard = ({
           <span class="field-value">${getVal(patient.angiotomoDescricao, '95%')}</span>
         </div>
       </div>
-      ${patient.tcControles && patient.tcControles.length > 0 ?
-        patient.tcControles.map((tc, idx) => `
-          <div class="grid" style="margin-top: 4px;">
-            <div class="field col-3">
-              <span class="field-label">TC Controle #${idx + 1} (Data)</span>
-              <span class="field-value">${getVal(tc.data, '70%')}</span>
+      ${(() => {
+        if (patient.tcControles && patient.tcControles.length > 0) {
+          const filledIndices = patient.tcControles
+            .map((tc, idx) => ({ tc, idx }))
+            .filter(item => Boolean(item.tc.data || item.tc.laudo));
+          const targetItem = filledIndices.length > 0
+            ? filledIndices[filledIndices.length - 1]
+            : { tc: patient.tcControles[patient.tcControles.length - 1], idx: patient.tcControles.length - 1 };
+          const label = patient.tcControles.length > 1
+            ? `TC Controle #${targetItem.idx + 1} (Última)`
+            : `TC Controle #${targetItem.idx + 1}`;
+          return `
+            <div class="grid" style="margin-top: 4px;">
+              <div class="field col-3">
+                <span class="field-label">${label} (Data)</span>
+                <span class="field-value">${getVal(targetItem.tc.data, '70%')}</span>
+              </div>
+              <div class="field col-9">
+                <span class="field-label">${label} (Laudo)</span>
+                <span class="field-value">${getVal(targetItem.tc.laudo, '95%')}</span>
+              </div>
             </div>
-            <div class="field col-9">
-              <span class="field-label">TC Controle #${idx + 1} (Laudo)</span>
-              <span class="field-value">${getVal(tc.laudo, '95%')}</span>
-            </div>
-          </div>
-        `).join('') : `
+          `;
+        }
+        return `
           <div class="grid">
             <div class="field col-3">
               <span class="field-label">TC Controle (Data)</span>
@@ -1956,8 +1968,8 @@ const PatientCard = ({
               <span class="field-value">${getVal(patient.tcControleLaudo, '95%')}</span>
             </div>
           </div>
-        `
-      }
+        `;
+      })()}
       <div class="grid">
         <div class="field col-3">
           <span class="field-label">ECG Entrada (Data)</span>
@@ -3589,19 +3601,31 @@ export default function InfusionApp() {
               <span class="field-value">${getVal(patient.angiotomoDescricao, '95%')}</span>
             </div>
           </div>
-          ${patient.tcControles && patient.tcControles.length > 0 ?
-            patient.tcControles.map((tc, idx) => `
-              <div class="grid" style="margin-top: 4px;">
-                <div class="field col-3">
-                  <span class="field-label">TC Controle #${idx + 1} (Data)</span>
-                  <span class="field-value">${getVal(tc.data, '70%')}</span>
+          ${(() => {
+            if (patient.tcControles && patient.tcControles.length > 0) {
+              const filledIndices = patient.tcControles
+                .map((tc, idx) => ({ tc, idx }))
+                .filter(item => Boolean(item.tc.data || item.tc.laudo));
+              const targetItem = filledIndices.length > 0
+                ? filledIndices[filledIndices.length - 1]
+                : { tc: patient.tcControles[patient.tcControles.length - 1], idx: patient.tcControles.length - 1 };
+              const label = patient.tcControles.length > 1
+                ? `TC Controle #${targetItem.idx + 1} (Última)`
+                : `TC Controle #${targetItem.idx + 1}`;
+              return `
+                <div class="grid" style="margin-top: 4px;">
+                  <div class="field col-3">
+                    <span class="field-label">${label} (Data)</span>
+                    <span class="field-value">${getVal(targetItem.tc.data, '70%')}</span>
+                  </div>
+                  <div class="field col-9">
+                    <span class="field-label">${label} (Laudo)</span>
+                    <span class="field-value">${getVal(targetItem.tc.laudo, '95%')}</span>
+                  </div>
                 </div>
-                <div class="field col-9">
-                  <span class="field-label">TC Controle #${idx + 1} (Laudo)</span>
-                  <span class="field-value">${getVal(tc.laudo, '95%')}</span>
-                </div>
-              </div>
-            `).join('') : `
+              `;
+            }
+            return `
               <div class="grid">
                 <div class="field col-3">
                   <span class="field-label">TC Controle (Data)</span>
@@ -3612,8 +3636,8 @@ export default function InfusionApp() {
                   <span class="field-value">${getVal(patient.tcControleLaudo, '95%')}</span>
                 </div>
               </div>
-            `
-          }
+            `;
+          })()}
           <div class="grid">
             <div class="field col-3">
               <span class="field-label">ECG Entrada (Data)</span>

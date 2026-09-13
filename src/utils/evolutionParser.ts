@@ -165,20 +165,14 @@ export function parseMedicalEvolutionText(text: string): ParsedEvolutionData {
     result.comorbidades = comorbMatch[1].trim();
   }
 
-  // 13. Tomografia
-  const tcMatch = text.match(/(?:TOMOGRAFIA E ANGIO-TC|TC DE CR[AÂ]NIO|TOMOGRAFIA)[^\.\n]*COM\s*([\s\S]*?)(?:\.\s*INDICADO|\.\s*MANTIDO|\n\s*NEUROCHECK|\n\s*EXAMES|\n\s*CONDUTAS|$)/i);
-  if (tcMatch) {
-    result.tcAdmissaoLaudo = tcMatch[1].replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-    result.tcAdmissaoData = result.dataAdmissao || result.dataIctus || '';
-  }
+  // 13. Tomografia (não preencher automaticamente a partir da evolução)
+  result.tcAdmissaoData = '';
+  result.tcAdmissaoLaudo = '';
+  result.angiotomoDescricao = '';
 
-  // 14. ECG
-  const ecgMatch = text.match(/ECG\s*(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4})?:\s*([^\n\r\*]+)/i);
-  if (ecgMatch) {
-    if (ecgMatch[1]) result.ecgData = formatToDDMMAA(ecgMatch[1]);
-    else result.ecgData = result.dataAdmissao || '';
-    result.ecgLaudo = ecgMatch[2].trim();
-  }
+  // 14. ECG (não preencher automaticamente a partir da evolução)
+  result.ecgData = '';
+  result.ecgLaudo = '';
 
   // 15. Glasgow & Pupilas
   const glasgowMatch = text.match(/GLASGOW\s*(\d+)/i);
