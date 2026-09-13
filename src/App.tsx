@@ -44,6 +44,7 @@ import { ChecklistForm } from './components/ChecklistForm';
 import { generateEvolucaoDocx } from './utils/docxGenerator';
 import { WhatsAppSettingsModal } from './components/WhatsAppSettingsModal';
 import { WhatsAppSendModal } from './components/WhatsAppSendModal';
+import { BackupModal } from './components/BackupModal';
 import { openEvolucaoTab } from './utils/evolucaoTab';
 import { parseEvolutionDocxFile, ParsedEvolutionData } from './utils/evolutionParser';
 
@@ -3053,6 +3054,43 @@ export default function InfusionApp() {
   const [restoreTargetPatient, setRestoreTargetPatient] = useState<ArchivedPatient | null>(null);
   const [restoreChosenBedId, setRestoreChosenBedId] = useState<number | null>(null);
 
+  // --- Backup e Segurança no Computador ---
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      try {
+        const payload = JSON.stringify({ patients, archivedPatients });
+        if (navigator.sendBeacon) {
+          const blob = new Blob([payload], { type: 'application/json' });
+          navigator.sendBeacon('/api/backup/salvar', blob);
+        } else {
+          fetch('/api/backup/salvar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: true
+          }).catch(() => {});
+        }
+      } catch (err) {}
+
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [patients, archivedPatients]);
+
+  const handleRestoreData = (restoredPatients: Patient[], restoredArchived?: ArchivedPatient[]) => {
+    setPatients(restoredPatients);
+    if (restoredArchived) {
+      setArchivedPatients(restoredArchived);
+    }
+  };
+
   // --- Importação de Evolução (.docx / Word) ---
   const [importPreviewData, setImportPreviewData] = useState<ParsedEvolutionData | null>(null);
   const [importTargetBedId, setImportTargetBedId] = useState<number | null>(null);
@@ -6048,6 +6086,15 @@ export default function InfusionApp() {
               )}
             </button>
 
+            <button 
+               onClick={() => setIsBackupModalOpen(true)}
+               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold transition-all shadow-sm hover:-translate-y-0.5 cursor-pointer active:scale-95"
+               title="Salvar backup no computador e opções de saída segura"
+            >
+              <Save size={14} />
+              <span>BACKUP & SAIR</span>
+            </button>
+
             {/* Divider */}
             <div className="h-6 w-[1px] bg-slate-200 hidden md:block" />
 
@@ -7387,6 +7434,14 @@ export default function InfusionApp() {
           setIsWhatsAppSendOpen(false);
           setIsWhatsAppSettingsOpen(true);
         }}
+      />
+
+      <BackupModal
+        isOpen={isBackupModalOpen}
+        onClose={() => setIsBackupModalOpen(false)}
+        patients={patients}
+        archivedPatients={archivedPatients}
+        onRestoreData={handleRestoreData}
       />
 
 
