@@ -10,7 +10,8 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
-  RefreshCw
+  RefreshCw,
+  Pill
 } from 'lucide-react';
 import { Patient, DailyChecklist, MEDS, calculateDose, getEffectiveUnit, formatDoseValue, ensureDailyChecklists } from '../App';
 
@@ -184,6 +185,34 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
   // Reset confirm state on column switch
   React.useEffect(() => {
     setIsConfirmingClearColumn(false);
+  }, [activeIndex]);
+
+  // Auto pre-fill antiplatelet, anticoagulant and continuous care when switching to an empty column
+  React.useEffect(() => {
+    if (activeIndex > 0) {
+      const currentChk = dailyChecklists[activeIndex];
+      const isColumnEmpty = !currentChk.checklistData && 
+        !currentChk.checklistNihssAtual && 
+        !currentChk.checklistGlasgow &&
+        !currentChk.checklistAntiagregante &&
+        !currentChk.checklistAnticoagulante;
+
+      if (isColumnEmpty) {
+        const prevList = [...dailyChecklists.slice(0, activeIndex)].reverse().find(item => Boolean(item.checklistData && item.checklistData.trim() !== '')) || dailyChecklists[activeIndex - 1];
+        if (prevList) {
+          const autoFilled = getAutoFilledColumn(prevList);
+          const updatedLists = [...dailyChecklists];
+          updatedLists[activeIndex] = {
+            ...currentChk,
+            ...autoFilled,
+          };
+          updatePatientRaw({
+            ...patientRaw,
+            dailyChecklists: updatedLists,
+          });
+        }
+      }
+    }
   }, [activeIndex]);
 
   const handleClearCurrentColumn = () => {
@@ -773,9 +802,9 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 items-start">
       
-      {/* COLUNA 1: AVALIAÇÃO INICIAL & REABILITAÇÃO */}
+      {/* COLUNA 1: NEUROLOGIA, TERAPÊUTICA & CONDUTAS */}
       <div className="space-y-3">
-        {/* SEÇÃO 1: AVALIAÇÃO INICIAL */}
+        {/* CARD 1: AVALIAÇÃO NEUROLÓGICA & GERAL */}
         <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
           <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
             <Activity size={14} className="text-blue-600" />
@@ -910,11 +939,215 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
             </div>
           </div>
         </div>
+
+        {/* CARD 2: TERAPÊUTICA & MEDICAÇÕES */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
+          <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
+            <Pill size={14} className="text-blue-600" />
+            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Terapêutica & Medicações</span>
+          </div>
+
+          {/* ANTIBIÓTICO */}
+          <div>
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Antibioticoterapia</label>
+            <div className="space-y-1.5">
+              <div className="flex gap-1.5 items-center">
+                <div className="flex gap-1 w-2/5 shrink-0">
+                  {['Sim', 'Não'].map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => updatePatient({ ...patient, checklistAntibiotico: patient.checklistAntibiotico === opt ? '' : (opt as any) })}
+                      className={`flex-1 py-1.5 rounded-xl text-[10px] font-black border transition-all ${
+                        patient.checklistAntibiotico === opt
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100'
+                          : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+                      }`}
+                    >
+                      {opt.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+                {patient.checklistAntibiotico === 'Não' && (
+                  <span className="text-[10px] text-slate-400 font-bold italic ml-1">Sem indicação no momento</span>
+                )}
+              </div>
+
+              {patient.checklistAntibiotico !== 'Não' && (() => {
+                const rawText = patient.checklistAntibioticoText || '';
+                const abxList = rawText.includes('\n') ? rawText.split('\n') : [rawText];
+                const displayList = abxList.length > 0 ? abxList : [''];
+
+                const handleAbxDayChange = (index: number, newDay: string) => {
+                  const currentParsed = parseAbxLine(displayList[index]);
+                  const formatted = formatAbxLine(newDay, currentParsed.name);
+                  const newList = [...displayList];
+                  newList[index] = formatted;
+                  updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n'), checklistAntibiotico: 'Sim' });
+                };
+
+                const handleAbxNameChange = (index: number, newName: string) => {
+                  const currentParsed = parseAbxLine(displayList[index]);
+                  const formatted = formatAbxLine(currentParsed.day, newName);
+                  const newList = [...displayList];
+                  newList[index] = formatted;
+                  updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n'), checklistAntibiotico: 'Sim' });
+                };
+
+                const handleAddAbx = () => {
+                  const newList = [...displayList, 'Dia 1 - '];
+                  updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n'), checklistAntibiotico: 'Sim' });
+                };
+
+                const handleRemoveAbx = (index: number) => {
+                  const newList = displayList.filter((_, i) => i !== index);
+                  updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n') });
+                };
+
+                return (
+                  <div className="space-y-1.5 mt-1">
+                    {displayList.map((abx, idx) => {
+                      const parsed = parseAbxLine(abx);
+                      return (
+                        <div key={idx} className="flex gap-1.5 items-center">
+                          <input
+                            type="number"
+                            min={0}
+                            max={31}
+                            placeholder="Dia (0-31)"
+                            value={parsed.day}
+                            onChange={(e) => handleAbxDayChange(idx, e.target.value)}
+                            className={`w-24 shrink-0 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Nome do antibiótico (Ex: Rocefin)"
+                            value={parsed.name}
+                            onChange={(e) => handleAbxNameChange(idx, e.target.value)}
+                            className={`flex-1 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                          />
+                          {displayList.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveAbx(idx)}
+                              title="Remover este antibiótico"
+                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shrink-0"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={handleAddAbx}
+                      className="flex items-center gap-1 text-[10px] font-black text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/80 px-2.5 py-1 rounded-xl transition-all border border-blue-200/60 shadow-xs"
+                    >
+                      <Plus size={12} />
+                      <span>+ Adicionar antibiótico</span>
+                    </button>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Antiagregante</label>
+              <input
+                type="text"
+                placeholder="Qual / Dose / Horário"
+                value={patient.checklistAntiagregante || ''}
+                onChange={(e) => updatePatient({ ...patient, checklistAntiagregante: e.target.value })}
+                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Anticoagulante</label>
+              <input
+                type="text"
+                placeholder="Qual / Dose / Horário"
+                value={patient.checklistAnticoagulante || ''}
+                onChange={(e) => updatePatient({ ...patient, checklistAnticoagulante: e.target.value })}
+                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* CARD 3: CONDUTAS, PLANTONISTA & APAGAR COLUNA */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
+          <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
+            <AlertCircle size={14} className="text-blue-600" />
+            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Condutas & Plantonista</span>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Condutas</label>
+            <textarea
+              placeholder="Descreva pendências, intercorrências e condutas do dia..."
+              value={patient.checklistCondutas || ''}
+              onChange={(e) => updatePatient({ ...patient, checklistCondutas: e.target.value })}
+              rows={4}
+              className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 custom-scrollbar ${theme.ringColor}`}
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Médico Plantonista</label>
+            <input
+              type="text"
+              placeholder="Dr(a). Nome do Médico"
+              value={patient.checklistMedicoPlantonista || ''}
+              onChange={(e) => updatePatient({ ...patient, checklistMedicoPlantonista: e.target.value })}
+              className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+            />
+          </div>
+
+          {/* BOTÃO PARA APAGAR INFORMAÇÕES DESTA COLUNA */}
+          <div className="pt-1 flex flex-col items-center gap-2">
+            {!isConfirmingClearColumn ? (
+              <button
+                type="button"
+                onClick={() => setIsConfirmingClearColumn(true)}
+                className="w-full py-2 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/80 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-[0.99]"
+              >
+                <Trash2 size={13} className="text-red-600 shrink-0" />
+                <span>Limpar dados da Coluna {activeIndex + 1}</span>
+              </button>
+            ) : (
+              <div className="w-full p-2.5 bg-red-50 border border-red-200 rounded-xl flex flex-col items-center justify-between gap-2 animate-in fade-in duration-200 shadow-sm">
+                <div className="flex items-center gap-1.5 text-red-950 text-xs font-bold text-center">
+                  <AlertCircle size={15} className="text-red-600 shrink-0" />
+                  <span>Apagar dados da <strong>Coluna {activeIndex + 1}</strong>?</span>
+                </div>
+                <div className="flex items-center gap-2 w-full">
+                  <button
+                    type="button"
+                    onClick={handleClearCurrentColumn}
+                    className="flex-1 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                  >
+                    Sim, apagar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsConfirmingClearColumn(false)}
+                    className="flex-1 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* COLUNA 2: SUPORTE DE VIDA, VENTILAÇÃO & CUIDADOS */}
+      {/* COLUNA 2: SUPORTE INTENSIVO & CUIDADOS CLÍNICOS */}
       <div className="space-y-3">
-        {/* SEÇÃO 2: SUPORTE VENTILATÓRIO E DROGAS */}
+        {/* CARD 1: SUPORTE VENTILATÓRIO E DROGAS */}
         <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
           <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
             <Activity size={14} className="text-blue-600" />
@@ -1128,14 +1361,14 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
           </div>
         </div>
 
-        {/* SEÇÃO 3: CLINICA E CUIDADOS DE ENFERMAGEM */}
+        {/* CARD 2: HEMODINÂMICA, LINHAS & CUIDADOS CLÍNICOS */}
         <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
           <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
             <Stethoscope size={14} className="text-blue-600" />
-            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Acompanhamento & Cuidados</span>
+            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Hemodinâmica & Cuidados</span>
           </div>
 
-          {/* PAS x PAD (Valores do Dia) - PAS e PAD mais compridos empilhados */}
+          {/* PAS x PAD */}
           <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-1.5">
             <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">PAS x PAD (Valores do Dia)</span>
             <div>
@@ -1149,7 +1382,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                   const combined = newPas || patient.checklistPad ? `${newPas || ''} x ${patient.checklistPad || ''}` : '';
                   updatePatient({ ...patient, checklistPas: newPas, checklistPasPad: combined });
                 }}
-                className={`w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
               />
             </div>
             <div>
@@ -1160,10 +1393,10 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                 value={patient.checklistPad || ''}
                 onChange={(e) => {
                   const newPad = e.target.value;
-                  const combined = patient.checklistPas || newPad ? `${patient.checklistPas || ''} x ${newPad}` : '';
+                  const combined = patient.checklistPas || newPad ? `${patient.checklistPas || ''} x ${newPad || ''}` : '';
                   updatePatient({ ...patient, checklistPad: newPad, checklistPasPad: combined });
                 }}
-                className={`w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
               />
             </div>
           </div>
@@ -1198,7 +1431,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
             </div>
           </div>
 
-          {/* CONTROLE GLICÊMICO (HGT) - Movido para abaixo de Febre */}
+          {/* CONTROLE GLICÊMICO (HGT) */}
           <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-1.5">
             <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Controle Glicêmico (HGT)</span>
             <div className="grid grid-cols-2 gap-2">
@@ -1225,142 +1458,13 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
             </div>
           </div>
 
-          {/* ANTIBIÓTICO */}
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Antibiótico</label>
-            <div className="space-y-1.5">
-              <div className="flex gap-1.5 items-center">
-                <div className="flex gap-1 w-2/5 shrink-0">
-                  {['Sim', 'Não'].map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => updatePatient({ ...patient, checklistAntibiotico: patient.checklistAntibiotico === opt ? '' : (opt as any) })}
-                      className={`flex-1 py-1.5 rounded-xl text-[10px] font-black border transition-all ${
-                        patient.checklistAntibiotico === opt
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100'
-                          : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-                      }`}
-                    >
-                      {opt.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-                {patient.checklistAntibiotico === 'Não' && (
-                  <span className="text-[10px] text-slate-400 font-bold italic ml-1">Sem indicação no momento</span>
-                )}
-              </div>
-
-              {patient.checklistAntibiotico !== 'Não' && (() => {
-                const rawText = patient.checklistAntibioticoText || '';
-                const abxList = rawText.includes('\n') ? rawText.split('\n') : [rawText];
-                const displayList = abxList.length > 0 ? abxList : [''];
-
-                const handleAbxDayChange = (index: number, newDay: string) => {
-                  const currentParsed = parseAbxLine(displayList[index]);
-                  const formatted = formatAbxLine(newDay, currentParsed.name);
-                  const newList = [...displayList];
-                  newList[index] = formatted;
-                  updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n'), checklistAntibiotico: 'Sim' });
-                };
-
-                const handleAbxNameChange = (index: number, newName: string) => {
-                  const currentParsed = parseAbxLine(displayList[index]);
-                  const formatted = formatAbxLine(currentParsed.day, newName);
-                  const newList = [...displayList];
-                  newList[index] = formatted;
-                  updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n'), checklistAntibiotico: 'Sim' });
-                };
-
-                const handleAddAbx = () => {
-                  const newList = [...displayList, 'Dia 1 - '];
-                  updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n'), checklistAntibiotico: 'Sim' });
-                };
-
-                const handleRemoveAbx = (index: number) => {
-                  const newList = displayList.filter((_, i) => i !== index);
-                  updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n') });
-                };
-
-                return (
-                  <div className="space-y-1.5 mt-1">
-                    {displayList.map((abx, idx) => {
-                      const parsed = parseAbxLine(abx);
-                      return (
-                        <div key={idx} className="flex gap-1.5 items-center">
-                          <input
-                            type="number"
-                            min={0}
-                            max={31}
-                            placeholder="Dia (0-31)"
-                            value={parsed.day}
-                            onChange={(e) => handleAbxDayChange(idx, e.target.value)}
-                            className={`w-24 shrink-0 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Nome do antibiótico (Ex: Rocefin)"
-                            value={parsed.name}
-                            onChange={(e) => handleAbxNameChange(idx, e.target.value)}
-                            className={`flex-1 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-                          />
-                          {displayList.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveAbx(idx)}
-                              title="Remover este antibiótico"
-                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shrink-0"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                    <button
-                      type="button"
-                      onClick={handleAddAbx}
-                      className="flex items-center gap-1 text-[10px] font-black text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/80 px-2.5 py-1 rounded-xl transition-all border border-blue-200/60 shadow-xs"
-                    >
-                      <Plus size={12} />
-                      <span>+ Adicionar antibiótico</span>
-                    </button>
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Antiagregante</label>
-              <input
-                type="text"
-                placeholder="Qual / Dose / Horário"
-                value={patient.checklistAntiagregante || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistAntiagregante: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Anticoagulante</label>
-              <input
-                type="text"
-                placeholder="Qual / Dose / Horário"
-                value={patient.checklistAnticoagulante || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistAnticoagulante: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-            </div>
-          </div>
-
           {/* ACESSO VENOSO */}
           <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-1.5">
             <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Acesso Venoso</span>
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="text"
-                placeholder="Local"
+                placeholder="Local (Ex: CVC Subclávia D)"
                 value={patient.checklistAcessoLocal || ''}
                 onChange={(e) => updatePatient({ ...patient, checklistAcessoLocal: e.target.value })}
                 className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
@@ -1399,23 +1503,36 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
             <div>
               <input
                 type="text"
-                placeholder="Tipo da Dieta"
+                placeholder="Tipo da Dieta (Ex: Enteral 1.5kcal / Oral branda)"
                 value={patient.checklistDietaTipo || ''}
                 onChange={(e) => updatePatient({ ...patient, checklistDietaTipo: e.target.value })}
                 className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
               />
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* COLUNA 3: LABS, CUIDADOS GERAIS, CONDUTAS & ASSINATURA */}
-      <div className="space-y-3">
-        {/* ELIMINAÇÕES & BALANÇOS */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
-          <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
-            <Scale size={14} className="text-blue-600" />
-            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Eliminações & Balanços</span>
+          {/* BALANÇO HÍDRICO & DIURESE */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Balanço Hídrico (24h)</label>
+              <input
+                type="text"
+                placeholder="Ex: +450 ml / -200 ml"
+                value={patient.checklistBalançoHidrico || ''}
+                onChange={(e) => updatePatient({ ...patient, checklistBalançoHidrico: e.target.value })}
+                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Diurese</label>
+              <input
+                type="text"
+                placeholder="Ex: 1500 ml"
+                value={patient.checklistDiurese || ''}
+                onChange={(e) => updatePatient({ ...patient, checklistDiurese: e.target.value })}
+                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+              />
+            </div>
           </div>
 
           {/* EVACUAÇÕES */}
@@ -1486,33 +1603,12 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
               />
             </div>
           </div>
-
-          {/* BALANÇO HÍDRICO & DIURESE */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Balanço Hídrico (24h)</label>
-              <input
-                type="text"
-                placeholder="Ex: +450 ml / -200 ml"
-                value={patient.checklistBalançoHidrico || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistBalançoHidrico: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Diurese</label>
-              <input
-                type="text"
-                placeholder="Ex: 1500 ml"
-                value={patient.checklistDiurese || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistDiurese: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-            </div>
-          </div>
         </div>
+      </div>
 
-        {/* SEÇÃO 5: EXAMES, LABS E MONITORIZAÇÃO */}
+      {/* COLUNA 3: LABORATÓRIO & MONITORIZAÇÃO */}
+      <div className="space-y-3">
+        {/* CARD 1: EXAMES, LABS E MONITORIZAÇÃO */}
         <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
           <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
             <Droplets size={14} className="text-blue-600" />
@@ -1716,73 +1812,6 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
               </div>
             </div>
           </div>
-        </div>
-
-        {/* SEÇÃO 6: CONDUTAS E ASSINATURA */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
-          <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
-            <AlertCircle size={14} className="text-blue-600" />
-            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Condutas</span>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Condutas</label>
-            <textarea
-              placeholder="Descreva pendências, intercorrências e condutas do dia..."
-              value={patient.checklistCondutas || ''}
-              onChange={(e) => updatePatient({ ...patient, checklistCondutas: e.target.value })}
-              rows={4}
-              className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 custom-scrollbar ${theme.ringColor}`}
-            />
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Médico Plantonista</label>
-            <input
-              type="text"
-              placeholder="Dr(a). Nome do Médico"
-              value={patient.checklistMedicoPlantonista || ''}
-              onChange={(e) => updatePatient({ ...patient, checklistMedicoPlantonista: e.target.value })}
-              className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-            />
-          </div>
-        </div>
-
-        {/* BOTÃO PARA APAGAR INFORMAÇÕES DESTA COLUNA */}
-        <div className="pt-2 flex flex-col items-center gap-2 text-left">
-          {!isConfirmingClearColumn ? (
-            <button
-              type="button"
-              onClick={() => setIsConfirmingClearColumn(true)}
-              className="w-full py-2.5 px-4 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/80 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-[0.99]"
-            >
-              <Trash2 size={15} className="text-red-600 shrink-0" />
-              <span>Apagar informações desta coluna (Coluna {activeIndex + 1})</span>
-            </button>
-          ) : (
-            <div className="w-full p-3.5 bg-red-50 border border-red-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200 shadow-sm">
-              <div className="flex items-center gap-2 text-red-950 text-xs font-bold text-center sm:text-left">
-                <AlertCircle size={18} className="text-red-600 shrink-0" />
-                <span>Tem certeza que deseja apagar todos os dados da <strong>Coluna {activeIndex + 1}</strong>?</span>
-              </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-                <button
-                  type="button"
-                  onClick={handleClearCurrentColumn}
-                  className="flex-1 sm:flex-none px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
-                >
-                  Sim, apagar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsConfirmingClearColumn(false)}
-                  className="flex-1 sm:flex-none px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

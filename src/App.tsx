@@ -1576,7 +1576,6 @@ const PatientCard = ({
       },
       { label: 'Evacuações', getValue: (d: DailyChecklist) => d.checklistEvacuacoes ? `${d.checklistEvacuacoes}${d.checklistEvacuacoesAspecto ? ` (${d.checklistEvacuacoesAspecto})` : ''}` : '' },
       { label: 'Presença de Escaras', getValue: (d: DailyChecklist) => d.checklistEscaras ? `${d.checklistEscaras}${d.checklistEscarasLocal ? ` [${d.checklistEscarasLocal}]` : ''}` : '' },
-      { label: 'ECG / Eco Doppler', getValue: (d: DailyChecklist) => (d.checklistEcgExame || d.checklistEcoDoppler) ? `ECG: ${d.checklistEcgExame || '—'} | Eco: ${d.checklistEcoDoppler || '—'}` : '' },
       { 
         label: 'Condutas', 
         getValue: (d: DailyChecklist) => d.checklistCondutas || '',
@@ -2111,13 +2110,13 @@ const PatientCard = ({
             </div>
             <div class="field col-9">
               <span class="field-label">${cranialTcs.firstLabel} (Laudo)</span>
-              <span class="field-value">${getVal(cranialTcs.firstLaudo, '95%')}</span>
+              <span class="field-value" style="font-size: 10px; font-weight: 600; line-height: 1.25;">${getVal(cranialTcs.firstLaudo, '95%')}</span>
             </div>
           </div>
           <div class="grid">
             <div class="field col-12">
               <span class="field-label">AngioTC / Doppler Transcraniano (Descrição)</span>
-              <span class="field-value">${getVal(patient.angiotomoDescricao, '95%')}</span>
+              <span class="field-value" style="font-size: 10px; font-weight: 600; line-height: 1.25;">${getVal(patient.angiotomoDescricao, '95%')}</span>
             </div>
           </div>
           <div class="grid" style="margin-top: 4px;">
@@ -2127,7 +2126,7 @@ const PatientCard = ({
             </div>
             <div class="field col-9">
               <span class="field-label">${cranialTcs.lastLabel} (Laudo)</span>
-              <span class="field-value">${getVal(cranialTcs.lastLaudo, '95%')}</span>
+              <span class="field-value" style="font-size: 10px; font-weight: 600; line-height: 1.25;">${getVal(cranialTcs.lastLaudo, '95%')}</span>
             </div>
           </div>
         `;
@@ -2139,7 +2138,7 @@ const PatientCard = ({
         </div>
         <div class="field col-9">
           <span class="field-label">ECG Entrada (Laudo)</span>
-          <span class="field-value">${getVal(patient.ecgLaudo, '95%')}</span>
+          <span class="field-value" style="font-size: 10.5px; font-weight: 600; line-height: 1.25;">${getVal(patient.ecgLaudo, '95%')}</span>
         </div>
       </div>
     </div>
@@ -3624,7 +3623,6 @@ export default function InfusionApp() {
       },
       { label: 'Evacuações', getValue: (d: DailyChecklist) => d.checklistEvacuacoes ? `${d.checklistEvacuacoes}${d.checklistEvacuacoesAspecto ? ` (${d.checklistEvacuacoesAspecto})` : ''}` : '' },
       { label: 'Presença de Escaras', getValue: (d: DailyChecklist) => d.checklistEscaras ? `${d.checklistEscaras}${d.checklistEscarasLocal ? ` [${d.checklistEscarasLocal}]` : ''}` : '' },
-      { label: 'ECG / Eco Doppler', getValue: (d: DailyChecklist) => (d.checklistEcgExame || d.checklistEcoDoppler) ? `ECG: ${d.checklistEcgExame || '—'} | Eco: ${d.checklistEcoDoppler || '—'}` : '' },
       { 
         label: 'Condutas', 
         getValue: (d: DailyChecklist) => d.checklistCondutas || '',
@@ -3786,13 +3784,13 @@ export default function InfusionApp() {
                 </div>
                 <div class="field col-9">
                   <span class="field-label">${cranialTcs.firstLabel} (Laudo)</span>
-                  <span class="field-value">${getVal(cranialTcs.firstLaudo, '95%')}</span>
+                  <span class="field-value" style="font-size: 10px; font-weight: 600; line-height: 1.25;">${getVal(cranialTcs.firstLaudo, '95%')}</span>
                 </div>
               </div>
               <div class="grid">
                 <div class="field col-12">
                   <span class="field-label">AngioTC / Doppler Transcraniano (Descrição)</span>
-                  <span class="field-value">${getVal(patient.angiotomoDescricao, '95%')}</span>
+                  <span class="field-value" style="font-size: 10px; font-weight: 600; line-height: 1.25;">${getVal(patient.angiotomoDescricao, '95%')}</span>
                 </div>
               </div>
               <div class="grid" style="margin-top: 4px;">
@@ -3802,7 +3800,7 @@ export default function InfusionApp() {
                 </div>
                 <div class="field col-9">
                   <span class="field-label">${cranialTcs.lastLabel} (Laudo)</span>
-                  <span class="field-value">${getVal(cranialTcs.lastLaudo, '95%')}</span>
+                  <span class="field-value" style="font-size: 10px; font-weight: 600; line-height: 1.25;">${getVal(cranialTcs.lastLaudo, '95%')}</span>
                 </div>
               </div>
             `;
@@ -3814,7 +3812,7 @@ export default function InfusionApp() {
             </div>
             <div class="field col-9">
               <span class="field-label">ECG Entrada (Laudo)</span>
-              <span class="field-value">${getVal(patient.ecgLaudo, '95%')}</span>
+              <span class="field-value" style="font-size: 10.5px; font-weight: 600; line-height: 1.25;">${getVal(patient.ecgLaudo, '95%')}</span>
             </div>
           </div>
         </div>
@@ -6199,15 +6197,6 @@ export default function InfusionApp() {
                   {archivedPatients.filter(a => (Date.now() - a.deletedAt) <= TEN_DAYS_MS).length}
                 </span>
               )}
-            </button>
-
-            <button 
-               onClick={() => setIsBackupModalOpen(true)}
-               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold transition-all shadow-sm hover:-translate-y-0.5 cursor-pointer active:scale-95"
-               title="Salvar backup no computador e opções de saída segura"
-            >
-              <Save size={14} />
-              <span>BACKUP & SAIR</span>
             </button>
 
             {/* Divider */}
