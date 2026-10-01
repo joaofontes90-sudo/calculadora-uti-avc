@@ -615,6 +615,137 @@ export const getFirstAndLastCranialTcs = (p: Patient) => {
   };
 };
 
+export const renderGasometriaHistoryTable = (p: Patient) => {
+  const allDaily = ensureDailyChecklists(p);
+  const filledLists = allDaily.filter(d => 
+    Boolean(
+      (d.checklistPh && d.checklistPh.trim()) || 
+      (d.checklistPao2Paco2 && d.checklistPao2Paco2.trim()) || 
+      (d.checklistHco3Sao2 && d.checklistHco3Sao2.trim()) || 
+      (d.checklistPfSf && d.checklistPfSf.trim())
+    )
+  );
+
+  const listsToRender = filledLists.length > 0 ? filledLists : [{} as DailyChecklist];
+
+  const rowsHtml = listsToRender.map((d, index) => {
+    const dataStr = d.checklistData || (filledLists.length === 0 ? '—' : `Gaso #${index + 1}`);
+    const ph = d.checklistPh || '—';
+    const pao2 = d.checklistPao2Paco2 || '—';
+    const hco3 = d.checklistHco3Sao2 || '—';
+    const pfsf = d.checklistPfSf || '—';
+
+    return `
+      <tr class="checklist-row">
+        <td style="font-weight: 800; text-align: center; font-size: 8px; color: #0f172a; padding: 2.5px 3px; background-color: #f8fafc;">${dataStr}</td>
+        <td style="text-align: center; font-size: 8px; font-weight: 700; padding: 2.5px 3px;">${ph}</td>
+        <td style="text-align: center; font-size: 8px; font-weight: 700; padding: 2.5px 3px;">${pao2}</td>
+        <td style="text-align: center; font-size: 8px; font-weight: 700; padding: 2.5px 3px;">${hco3}</td>
+        <td style="text-align: center; font-size: 8px; font-weight: 700; padding: 2.5px 3px;">${pfsf}</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <div class="section-title" style="margin-top: 6px; margin-bottom: 3px;">V. Histórico de Gasometrias Arteriais</div>
+    <table class="checklist-table" style="margin-top: 2px; margin-bottom: 6px; table-layout: fixed;">
+      <thead>
+        <tr>
+          <th style="width: 16%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">DATA</th>
+          <th style="width: 16%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">pH</th>
+          <th style="width: 26%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">PaO2 / PaCO2</th>
+          <th style="width: 24%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">HCO3 / SaO2</th>
+          <th style="width: 18%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">P/F ou S/F</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+  `;
+};
+
+export const renderLaboratorioHistoryTable = (p: Patient) => {
+  const allDaily = ensureDailyChecklists(p);
+  const filledLists = allDaily.filter(d => 
+    Boolean(
+      (d.checklistHb && d.checklistHb.trim()) || 
+      (d.checklistHt && d.checklistHt.trim()) || 
+      (d.checklistPlaquetas && d.checklistPlaquetas.trim()) || 
+      (d.checklistLeucograma && d.checklistLeucograma.trim()) || 
+      (d.checklistBastoes && d.checklistBastoes.trim()) || 
+      (d.checklistInr && d.checklistInr.trim()) || 
+      (d.checklistSodio && d.checklistSodio.trim()) || 
+      (d.checklistPotassio && d.checklistPotassio.trim()) || 
+      (d.checklistMagnesio && d.checklistMagnesio.trim()) || 
+      (d.checklistFosforo && d.checklistFosforo.trim()) || 
+      (d.checklistUreia && d.checklistUreia.trim()) || 
+      (d.checklistCreatinina && d.checklistCreatinina.trim()) || 
+      (d.checklistTroponina && d.checklistTroponina.trim()) || 
+      (d.checklistBioquimicaOutros && d.checklistBioquimicaOutros.trim())
+    )
+  );
+
+  const listsToRender = filledLists.length > 0 ? filledLists : [{} as DailyChecklist];
+
+  const rowsHtml = listsToRender.map((d, index) => {
+    const dataStr = d.checklistData || (filledLists.length === 0 ? '—' : `Lab #${index + 1}`);
+    const hbHt = (d.checklistHb || d.checklistHt) ? `${d.checklistHb || '—'} / ${d.checklistHt || '—'}` : '—';
+    const plaq = d.checklistPlaquetas || '—';
+    const leu = d.checklistLeucograma || '—';
+    const bast = d.checklistBastoes || '—';
+    const inr = d.checklistInr || '—';
+    const na = d.checklistSodio || '—';
+    const k = d.checklistPotassio || '—';
+    const mgP = (d.checklistMagnesio || d.checklistFosforo) ? `Mg:${d.checklistMagnesio || '—'} | P:${d.checklistFosforo || '—'}` : '—';
+    const urCr = (d.checklistUreia || d.checklistCreatinina) ? `Ur:${d.checklistUreia || '—'} | Cr:${d.checklistCreatinina || '—'}` : '—';
+    const trop = d.checklistTroponina || '—';
+    const outros = d.checklistBioquimicaOutros || '—';
+
+    return `
+      <tr class="checklist-row">
+        <td style="font-weight: 800; text-align: center; font-size: 7.5px; color: #0f172a; padding: 2px 2.5px; background-color: #f8fafc;">${dataStr}</td>
+        <td style="text-align: center; font-size: 7.5px; font-weight: 700; padding: 2px 2.5px;">${hbHt}</td>
+        <td style="text-align: center; font-size: 7.5px; font-weight: 700; padding: 2px 2.5px;">${plaq}</td>
+        <td style="text-align: center; font-size: 7.5px; font-weight: 700; padding: 2px 2.5px;">${leu}</td>
+        <td style="text-align: center; font-size: 7.5px; font-weight: 700; padding: 2px 2.5px;">${bast}</td>
+        <td style="text-align: center; font-size: 7.5px; font-weight: 700; padding: 2px 2.5px;">${inr}</td>
+        <td style="text-align: center; font-size: 7.5px; font-weight: 700; padding: 2px 2.5px;">${na}</td>
+        <td style="text-align: center; font-size: 7.5px; font-weight: 700; padding: 2px 2.5px;">${k}</td>
+        <td style="text-align: center; font-size: 7px; font-weight: 600; padding: 2px 2.5px;">${mgP}</td>
+        <td style="text-align: center; font-size: 7px; font-weight: 600; padding: 2px 2.5px;">${urCr}</td>
+        <td style="text-align: center; font-size: 7.5px; font-weight: 700; padding: 2px 2.5px;">${trop}</td>
+        <td style="text-align: center; font-size: 7px; font-weight: 600; padding: 2px 2.5px;">${outros}</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <div class="section-title" style="margin-top: 6px; margin-bottom: 3px;">VI. Histórico de Exames Laboratoriais</div>
+    <table class="checklist-table" style="margin-top: 2px; margin-bottom: 8px; table-layout: fixed;">
+      <thead>
+        <tr>
+          <th style="width: 10%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">DATA</th>
+          <th style="width: 9%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Hb / Ht</th>
+          <th style="width: 8%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Plaq</th>
+          <th style="width: 9%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Leucócitos</th>
+          <th style="width: 7%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Bastões</th>
+          <th style="width: 6%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">INR</th>
+          <th style="width: 6%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Na</th>
+          <th style="width: 6%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">K</th>
+          <th style="width: 10%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Mg / P</th>
+          <th style="width: 12%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Ur / Cr</th>
+          <th style="width: 6%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Trop</th>
+          <th style="width: 11%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Outros</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+  `;
+};
+
 // --- Main Patient Component ---
 
 export interface TcControleItem {
@@ -1445,20 +1576,6 @@ const PatientCard = ({
       },
       { label: 'Evacuações', getValue: (d: DailyChecklist) => d.checklistEvacuacoes ? `${d.checklistEvacuacoes}${d.checklistEvacuacoesAspecto ? ` (${d.checklistEvacuacoesAspecto})` : ''}` : '' },
       { label: 'Presença de Escaras', getValue: (d: DailyChecklist) => d.checklistEscaras ? `${d.checklistEscaras}${d.checklistEscarasLocal ? ` [${d.checklistEscarasLocal}]` : ''}` : '' },
-      { label: 'Fisioterapia Motora', getValue: (d: DailyChecklist) => (d.checklistFisioGrauForca || d.checklistFisioTonus) ? `Força: ${d.checklistFisioGrauForca || '—'} / Tônus: ${d.checklistFisioTonus || '—'}` : '' },
-      { label: 'Avaliação Fonoaudiológica', getValue: (d: DailyChecklist) => d.checklistFonoaudiologia },
-      { label: 'Disfagia / Linguagem', getValue: (d: DailyChecklist) => d.checklistDisfagiaLinguagem },
-      { label: 'Gasometria (pH/PaO2/HCO3)', getValue: (d: DailyChecklist) => (d.checklistPh || d.checklistPao2Paco2) ? `pH: ${d.checklistPh || '—'} | PaO2: ${d.checklistPao2Paco2 || '—'} | HCO3: ${d.checklistHco3Sao2 || '—'}` : '', colorClass: 'row-green' },
-      { label: 'Laboratório (Hb/Ht/Plaq)', getValue: (d: DailyChecklist) => (d.checklistHb || d.checklistPlaquetas) ? `Hb: ${d.checklistHb || '—'} | Plaq: ${d.checklistPlaquetas || '—'}` : '', colorClass: 'row-green' },
-      { label: 'Leucócitos / Bastões', getValue: (d: DailyChecklist) => (d.checklistLeucograma || d.checklistBastoes) ? `Leu: ${d.checklistLeucograma || '—'} | Bast: ${d.checklistBastoes || '—'}` : '', colorClass: 'row-green' },
-      { label: 'INR / Sódio / Potássio', getValue: (d: DailyChecklist) => (d.checklistInr || d.checklistSodio || d.checklistPotassio) ? `INR: ${d.checklistInr || '—'} | Na: ${d.checklistSodio || '—'} | K: ${d.checklistPotassio || '—'}` : '', colorClass: 'row-green' },
-      { label: 'Ureia / Creatinina / Outros', getValue: (d: DailyChecklist) => {
-          const parts = [];
-          if (d.checklistUreia) parts.push(`Ur: ${d.checklistUreia}`);
-          if (d.checklistCreatinina) parts.push(`Cr: ${d.checklistCreatinina}`);
-          if (d.checklistBioquimicaOutros) parts.push(`Outros: ${d.checklistBioquimicaOutros}`);
-          return parts.length > 0 ? parts.join(' | ') : '';
-        }, colorClass: 'row-green' },
       { label: 'ECG / Eco Doppler', getValue: (d: DailyChecklist) => (d.checklistEcgExame || d.checklistEcoDoppler) ? `ECG: ${d.checklistEcgExame || '—'} | Eco: ${d.checklistEcoDoppler || '—'}` : '' },
       { 
         label: 'Condutas', 
@@ -2037,6 +2154,12 @@ const PatientCard = ({
         ${tableRowsHtml}
       </tbody>
     </table>
+
+    <!-- HISTÓRICO COMPLETO DE GASOMETRIAS ARTERIAIS -->
+    ${renderGasometriaHistoryTable(patient)}
+
+    <!-- HISTÓRICO COMPLETO DE EXAMES LABORATORIAIS -->
+    ${renderLaboratorioHistoryTable(patient)}
 
     <!-- ASSINATURA -->
     <div class="footer-signature" style="margin-top: 35px; display: flex; justify-content: center; align-items: flex-end;">
@@ -3501,20 +3624,6 @@ export default function InfusionApp() {
       },
       { label: 'Evacuações', getValue: (d: DailyChecklist) => d.checklistEvacuacoes ? `${d.checklistEvacuacoes}${d.checklistEvacuacoesAspecto ? ` (${d.checklistEvacuacoesAspecto})` : ''}` : '' },
       { label: 'Presença de Escaras', getValue: (d: DailyChecklist) => d.checklistEscaras ? `${d.checklistEscaras}${d.checklistEscarasLocal ? ` [${d.checklistEscarasLocal}]` : ''}` : '' },
-      { label: 'Fisioterapia Motora', getValue: (d: DailyChecklist) => (d.checklistFisioGrauForca || d.checklistFisioTonus) ? `Força: ${d.checklistFisioGrauForca || '—'} / Tônus: ${d.checklistFisioTonus || '—'}` : '' },
-      { label: 'Avaliação Fonoaudiológica', getValue: (d: DailyChecklist) => d.checklistFonoaudiologia },
-      { label: 'Disfagia / Linguagem', getValue: (d: DailyChecklist) => d.checklistDisfagiaLinguagem },
-      { label: 'Gasometria (pH/PaO2/HCO3)', getValue: (d: DailyChecklist) => (d.checklistPh || d.checklistPao2Paco2) ? `pH: ${d.checklistPh || '—'} | PaO2: ${d.checklistPao2Paco2 || '—'} | HCO3: ${d.checklistHco3Sao2 || '—'}` : '', colorClass: 'row-green' },
-      { label: 'Laboratório (Hb/Ht/Plaq)', getValue: (d: DailyChecklist) => (d.checklistHb || d.checklistPlaquetas) ? `Hb: ${d.checklistHb || '—'} | Plaq: ${d.checklistPlaquetas || '—'}` : '', colorClass: 'row-green' },
-      { label: 'Leucócitos / Bastões', getValue: (d: DailyChecklist) => (d.checklistLeucograma || d.checklistBastoes) ? `Leu: ${d.checklistLeucograma || '—'} | Bast: ${d.checklistBastoes || '—'}` : '', colorClass: 'row-green' },
-      { label: 'INR / Sódio / Potássio', getValue: (d: DailyChecklist) => (d.checklistInr || d.checklistSodio || d.checklistPotassio) ? `INR: ${d.checklistInr || '—'} | Na: ${d.checklistSodio || '—'} | K: ${d.checklistPotassio || '—'}` : '', colorClass: 'row-green' },
-      { label: 'Ureia / Creatinina / Outros', getValue: (d: DailyChecklist) => {
-          const parts = [];
-          if (d.checklistUreia) parts.push(`Ur: ${d.checklistUreia}`);
-          if (d.checklistCreatinina) parts.push(`Cr: ${d.checklistCreatinina}`);
-          if (d.checklistBioquimicaOutros) parts.push(`Outros: ${d.checklistBioquimicaOutros}`);
-          return parts.length > 0 ? parts.join(' | ') : '';
-        }, colorClass: 'row-green' },
       { label: 'ECG / Eco Doppler', getValue: (d: DailyChecklist) => (d.checklistEcgExame || d.checklistEcoDoppler) ? `ECG: ${d.checklistEcgExame || '—'} | Eco: ${d.checklistEcoDoppler || '—'}` : '' },
       { 
         label: 'Condutas', 
@@ -3720,6 +3829,12 @@ export default function InfusionApp() {
             ${tableRowsHtml}
           </tbody>
         </table>
+
+        <!-- HISTÓRICO COMPLETO DE GASOMETRIAS ARTERIAIS -->
+        ${renderGasometriaHistoryTable(patient)}
+
+        <!-- HISTÓRICO COMPLETO DE EXAMES LABORATORIAIS -->
+        ${renderLaboratorioHistoryTable(patient)}
 
         <!-- ASSINATURA -->
         <div class="footer-signature" style="margin-top: 35px; display: flex; justify-content: center; align-items: flex-end;">
