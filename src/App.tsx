@@ -3221,6 +3221,8 @@ export default function InfusionApp() {
   const [showDilutionsModal, setShowDilutionsModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [examModalPatient, setExamModalPatient] = useState<Patient | null>(null);
+  const [showAllGasometriasModal, setShowAllGasometriasModal] = useState(false);
+  const [selectedGasometriaBedIds, setSelectedGasometriaBedIds] = useState<number[]>([]);
   const [isWhatsAppSettingsOpen, setIsWhatsAppSettingsOpen] = useState(false);
   const [isWhatsAppSendOpen, setIsWhatsAppSendOpen] = useState(false);
 
@@ -4581,14 +4583,7 @@ export default function InfusionApp() {
     setIsWhatsAppSendOpen(true);
   };
 
-  const printGasometria = (p: Patient) => {
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      alert('Por favor, permita pop-ups para este site para que o formulário possa ser impresso.');
-      return;
-    }
-
+  const renderGasometriaSheetDiv = (p: Patient, requestDateStr: string, requestTimeStr: string) => {
     const escapeHtml = (str: string) => {
       if (!str) return '';
       return str
@@ -4616,15 +4611,100 @@ export default function InfusionApp() {
 
     const setorLeito = `UNIDADE DE EMERGÊNCIA - UTI AVC - ${leitoStr}`;
     const unidadeExecutante = 'UE';
-    const logoUrl = window.location.origin + "/logopng.png";
 
-    const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Solicitação de Gasometria — Leito ${p.id}</title>
-  <style>
+    return `
+  <div class="sheet">
+    <div class="header-logo-container">
+      <img src="https://bienal.ufal.br/2023/wp-content/themes/bienaldealagoas/image/logos/governo-de-alagoas.png" alt="Governo de Alagoas" style="max-height: 70px; width: auto; display: block; margin: 0 auto;" />
+    </div>
+
+    <div class="gov-title">
+      ESTADO DE ALAGOAS SECRETARIA DE ESTADO DA SAÚDE<br>
+      SECRETARIA EXECUTIVA DE AÇÕES DE SAÚDE SUPERINTENDÊNCIA DE<br>
+      ASSISTÊNCIA PRÉ-HOSPITALAR E HOSPITALAR
+    </div>
+
+    <div class="anexo-subtitle">
+      (Anexo 2) – Formulário de solicitação de gasometrias
+    </div>
+
+    <div class="main-title">
+      SOLICITAÇÃO DE GASOMETRIA
+    </div>
+
+    <div class="gaso-options">
+      <span>( <strong>X</strong> ) Arterial</span>
+      <span style="margin-left: 50px;">( &nbsp; ) Venosa</span>
+    </div>
+
+    <div class="section-title">1. IDENTIFICAÇÃO DO PACIENTE</div>
+    <ul class="patient-info-list">
+      <li>
+        <span class="info-bullet">• Nome:</span>
+        <span class="info-value-line">${escapeHtml(nome)}</span>
+      </li>
+      <li>
+        <span class="info-bullet">• Data de nascimento / Idade:</span>
+        <span class="info-value-line">${escapeHtml(dataNascIdade)}</span>
+      </li>
+      <li>
+        <span class="info-bullet">• Prontuário:</span>
+        <span class="info-value-line">${escapeHtml(registro)}</span>
+      </li>
+      <li>
+        <span class="info-bullet">• Unidade Solicitante/ Setor / Leito:</span>
+        <span class="info-value-line">${escapeHtml(setorLeito)}</span>
+      </li>
+      <li>
+        <span class="info-bullet">• Unidade Executante:</span>
+        <span class="info-value-line">${escapeHtml(unidadeExecutante)}</span>
+      </li>
+    </ul>
+
+    <div class="section-title">2. INDICAÇÃO <em>(Assinalar uma ou mais)</em></div>
+    <div class="indicacao-block">
+      <span class="checkbox-inline"><span class="checkbox-box"></span>Dispneia aguda / insuficiência respiratória</span>
+      <span class="checkbox-inline"><span class="checkbox-box"></span>Hipoxemia ou suspeita de retenção de CO₂</span>
+      <span class="checkbox-inline"><span class="checkbox-box checked-x">X</span><strong>Avaliação e monitorização de oxigenoterapia ou ventilação</strong></span>
+      <span class="checkbox-inline"><span class="checkbox-box"></span>Suspeita de acidose ou alcalose metabólica</span>
+      <span class="checkbox-inline"><span class="checkbox-box"></span>Suspeita ou monitorização de sepse / choque</span>
+      <span class="checkbox-inline"><span class="checkbox-box"></span>Distúrbios hidroeletrolíticos graves</span>
+      <span class="checkbox-inline"><span class="checkbox-box"></span>Monitorização terapêutica (pós-intervenção)</span>
+      <div class="checkbox-last-row">
+        <span class="checkbox-box" style="margin-bottom: 2px;"></span>
+        <span style="white-space: nowrap; margin-right: 5px;">Outro motivo clínico relevante:</span>
+        <span class="line-fill"></span>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: flex-end; width: 100%; margin-top: 25px; margin-bottom: 20px;">
+      <span style="font-weight: bold; font-size: 11px; text-transform: uppercase; white-space: nowrap; margin-right: 5px;">3. HIPÓTESE DIAGNÓSTICA:</span>
+      <span class="line-fill"></span>
+    </div>
+
+    <div class="section-title">4. PROFISSIONAL SOLICITANTE:</div>
+    <ul class="patient-info-list">
+      <li style="margin-bottom: 12px; display: flex; align-items: flex-end; width: 60%;">
+        <span class="info-bullet">• Nome e registro:</span>
+        <span class="info-value-line" style="min-height: 18px;"></span>
+      </li>
+      <li style="display: flex; align-items: flex-end; width: 60%;">
+        <span class="info-bullet">• Data / Hora:</span>
+        <span style="font-family: Arial, sans-serif; font-size: 11px; padding-left: 8px; letter-spacing: 0.5px; font-weight: bold; border-bottom: 1px solid #000; flex-grow: 1; min-height: 18px; padding-bottom: 1px; color: #0f172a;">
+          ${escapeHtml(requestDateStr)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${escapeHtml(requestTimeStr)}
+        </span>
+      </li>
+    </ul>
+
+    <div class="footer-section">
+      <hr class="footer-hr">
+      <div>Avenida da Paz, 978, Jaraguá, Maceió/AL – CEP: 57025-059. Fone: (82) 3315-1102 www.saude.al.gov.br</div>
+    </div>
+  </div>
+    `;
+  };
+
+  const getGasometriaPrintStyles = () => `
     @page {
       size: A4 portrait;
       margin: 1.5cm 1.5cm 1.5cm 1.5cm;
@@ -4646,6 +4726,9 @@ export default function InfusionApp() {
       justify-content: space-between;
       align-items: center;
       font-family: system-ui, sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     .no-print-bar span {
@@ -4676,13 +4759,20 @@ export default function InfusionApp() {
         padding: 0;
       }
       .sheet {
+        page-break-after: always;
+        break-after: page;
+        page-break-inside: avoid;
         box-shadow: none !important;
         border: none !important;
         margin: 0 !important;
         padding: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
-        min-height: auto !important;
+        min-height: 26cm !important;
+      }
+      .sheet:last-child {
+        page-break-after: auto;
+        break-after: auto;
       }
     }
     .sheet {
@@ -4795,12 +4885,17 @@ export default function InfusionApp() {
       margin-bottom: 8px;
     }
     .checkbox-box {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 11px;
+      height: 11px;
       border: 1px solid #000;
       margin-right: 5px;
       flex-shrink: 0;
+      font-size: 9px;
+      font-weight: 900;
+      line-height: 1;
     }
     .checkbox-last-row {
       display: flex;
@@ -4826,6 +4921,39 @@ export default function InfusionApp() {
       border-top: 1px solid #000;
       margin-bottom: 8px;
     }
+  `;
+
+  const getCurrentDateAndTime = () => {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = String(now.getFullYear());
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return {
+      dateStr: `${day}/${month}/${year}`,
+      timeStr: `${hours}:${minutes}`
+    };
+  };
+
+  const printGasometria = (p: Patient) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Por favor, permita pop-ups para este site para que o formulário possa ser impresso.');
+      return;
+    }
+
+    const { dateStr, timeStr } = getCurrentDateAndTime();
+    const sheetHtml = renderGasometriaSheetDiv(p, dateStr, timeStr);
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Solicitação de Gasometria — Leito ${p.id}</title>
+  <style>
+    ${getGasometriaPrintStyles()}
   </style>
 </head>
 <body>
@@ -4834,100 +4962,68 @@ export default function InfusionApp() {
     <button class="btn-print" onclick="window.print()">Confirmar e Imprimir</button>
   </div>
 
-  <div class="sheet">
-    <div class="header-logo-container">
-      <img src="https://bienal.ufal.br/2023/wp-content/themes/bienaldealagoas/image/logos/governo-de-alagoas.png" alt="Governo de Alagoas" style="max-height: 70px; width: auto; display: block; margin: 0 auto;" />
-    </div>
-
-    <div class="gov-title">
-      ESTADO DE ALAGOAS SECRETARIA DE ESTADO DA SAÚDE<br>
-      SECRETARIA EXECUTIVA DE AÇÕES DE SAÚDE SUPERINTENDÊNCIA DE<br>
-      ASSISTÊNCIA PRÉ-HOSPITALAR E HOSPITALAR
-    </div>
-
-    <div class="anexo-subtitle">
-      (Anexo 2) – Formulário de solicitação de gasometrias
-    </div>
-
-    <div class="main-title">
-      SOLICITAÇÃO DE GASOMETRIA
-    </div>
-
-    <div class="gaso-options">
-      <span>( &nbsp; ) Arterial</span>
-      <span style="margin-left: 50px;">( &nbsp; ) Venosa</span>
-    </div>
-
-    <div class="section-title">1. IDENTIFICAÇÃO DO PACIENTE</div>
-    <ul class="patient-info-list">
-      <li>
-        <span class="info-bullet">• Nome:</span>
-        <span class="info-value-line">${escapeHtml(nome)}</span>
-      </li>
-      <li>
-        <span class="info-bullet">• Data de nascimento / Idade:</span>
-        <span class="info-value-line">${escapeHtml(dataNascIdade)}</span>
-      </li>
-      <li>
-        <span class="info-bullet">• Prontuário:</span>
-        <span class="info-value-line">${escapeHtml(registro)}</span>
-      </li>
-      <li>
-        <span class="info-bullet">• Unidade Solicitante/ Setor / Leito:</span>
-        <span class="info-value-line">${escapeHtml(setorLeito)}</span>
-      </li>
-      <li>
-        <span class="info-bullet">• Unidade Executante:</span>
-        <span class="info-value-line">${escapeHtml(unidadeExecutante)}</span>
-      </li>
-    </ul>
-
-    <div class="section-title">2. INDICAÇÃO <em>(Assinalar uma ou mais)</em></div>
-    <div class="indicacao-block">
-      <span class="checkbox-inline"><span class="checkbox-box"></span>Dispneia aguda / insuficiência respiratória</span>
-      <span class="checkbox-inline"><span class="checkbox-box"></span>Hipoxemia ou suspeita de retenção de CO₂</span>
-      <span class="checkbox-inline"><span class="checkbox-box"></span>Avaliação e monitorização de oxigenoterapia ou ventilação</span>
-      <span class="checkbox-inline"><span class="checkbox-box"></span>Suspeita de acidose ou alcalose metabólica</span>
-      <span class="checkbox-inline"><span class="checkbox-box"></span>Suspeita ou monitorização de sepse / choque</span>
-      <span class="checkbox-inline"><span class="checkbox-box"></span>Distúrbios hidroeletrolíticos graves</span>
-      <span class="checkbox-inline"><span class="checkbox-box"></span>Monitorização terapêutica (pós-intervenção)</span>
-      <div class="checkbox-last-row">
-        <span class="checkbox-box" style="margin-bottom: 2px;"></span>
-        <span style="white-space: nowrap; margin-right: 5px;">Outro motivo clínico relevante:</span>
-        <span class="line-fill"></span>
-      </div>
-    </div>
-
-    <div style="display: flex; align-items: flex-end; width: 100%; margin-top: 25px; margin-bottom: 20px;">
-      <span style="font-weight: bold; font-size: 11px; text-transform: uppercase; white-space: nowrap; margin-right: 5px;">3. HIPÓTESE DIAGNÓSTICA:</span>
-      <span class="line-fill"></span>
-    </div>
-
-    <div class="section-title">4. PROFISSIONAL SOLICITANTE:</div>
-    <ul class="patient-info-list">
-      <li style="margin-bottom: 12px; display: flex; align-items: flex-end; width: 60%;">
-        <span class="info-bullet">• Nome e registro:</span>
-        <span class="info-value-line" style="min-height: 18px;"></span>
-      </li>
-      <li style="display: flex; align-items: flex-end; width: 60%;">
-        <span class="info-bullet">• Data / Hora:</span>
-        <span style="font-family: Arial, sans-serif; font-size: 11px; padding-left: 8px; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #000; flex-grow: 1; min-height: 18px; padding-bottom: 1px; color: #000;">
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        </span>
-      </li>
-    </ul>
-
-    <div class="footer-section">
-      <hr class="footer-hr">
-      <div>Avenida da Paz, 978, Jaraguá, Maceió/AL – CEP: 57025-059. Fone: (82) 3315-1102 www.saude.al.gov.br</div>
-    </div>
-  </div>
+  ${sheetHtml}
 </body>
 </html>
     `;
 
     printWindow.document.write(htmlContent);
     printWindow.document.close();
+  };
+
+  const handleOpenAllGasometriasModal = () => {
+    const occupied = patients.filter(p => p.name && p.name.trim() !== '').sort((a, b) => a.id - b.id);
+    if (occupied.length === 0) {
+      alert('Nenhum leito ocupado para gerar solicitações de gasometria.');
+      return;
+    }
+    setSelectedGasometriaBedIds(occupied.map(p => p.id));
+    setShowAllGasometriasModal(true);
+  };
+
+  const printSelectedGasometrias = () => {
+    const selectedPatients = patients
+      .filter(p => p.name && p.name.trim() !== '' && selectedGasometriaBedIds.includes(p.id))
+      .sort((a, b) => a.id - b.id);
+
+    if (selectedPatients.length === 0) {
+      alert('Selecione pelo menos um paciente/leito para gerar a impressão.');
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Por favor, permita pop-ups para este site para que as solicitações de gasometria possam ser impressas.');
+      return;
+    }
+
+    const { dateStr, timeStr } = getCurrentDateAndTime();
+    const sheetsHtml = selectedPatients.map(p => renderGasometriaSheetDiv(p, dateStr, timeStr)).join('');
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Solicitações de Gasometria (${selectedPatients.length} Leito${selectedPatients.length > 1 ? 's' : ''})</title>
+  <style>
+    ${getGasometriaPrintStyles()}
+  </style>
+</head>
+<body>
+  <div class="no-print no-print-bar">
+    <span>Solicitações de Gasometria Arterial — ${selectedPatients.length} leito(s) selecionado(s) (${dateStr} às ${timeStr})</span>
+    <button class="btn-print" onclick="window.print()">Confirmar e Imprimir Todas (${selectedPatients.length})</button>
+  </div>
+
+  ${sheetsHtml}
+</body>
+</html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    setShowAllGasometriasModal(false);
   };
 
   const handleSaveAndPrintExam = () => {
@@ -7522,7 +7618,176 @@ export default function InfusionApp() {
           <FileText size={14} />
           <span>Todos Exames</span>
         </button>
+
+        <button
+          type="button"
+          onClick={handleOpenAllGasometriasModal}
+          className="flex items-center gap-1.5 bg-rose-600/90 hover:bg-rose-700 text-white font-black text-[11px] px-3 py-2 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 uppercase tracking-wider border border-rose-500"
+          title="Selecionar e imprimir solicitações de gasometria arterial dos leitos ocupados"
+        >
+          <Printer size={14} />
+          <span>Todas Gasometrias</span>
+        </button>
       </div>
+
+      {/* ALL GASOMETRIAS SELECTION MODAL */}
+      <AnimatePresence>
+        {showAllGasometriasModal && (
+          <div key="all-gasometrias-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAllGasometriasModal(false)}
+              className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] border border-slate-200 z-10 text-left"
+            >
+              {/* Header */}
+              <div className="bg-rose-600 px-6 py-4 text-white flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <Printer size={22} />
+                  <div>
+                    <h2 className="font-black text-base uppercase tracking-wider leading-tight">Solicitação de Gasometrias</h2>
+                    <p className="text-[10px] opacity-90 font-bold uppercase tracking-wider mt-0.5">
+                      Selecione os pacientes/leitos ocupados para impressão
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAllGasometriasModal(false)}
+                  className="p-1.5 rounded-lg hover:bg-white/15 transition-colors"
+                >
+                  <Plus className="rotate-45" size={20} />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-6 bg-slate-50 space-y-4 custom-scrollbar">
+                {/* Pre-filled summary info */}
+                <div className="bg-rose-50/80 border border-rose-200 rounded-xl p-3.5 space-y-1.5 text-xs">
+                  <div className="text-[10px] font-black text-rose-800 uppercase tracking-wider">
+                    Campos Pré-Preenchidos Automaticamente:
+                  </div>
+                  <div className="text-slate-700 font-semibold flex items-center gap-2">
+                    <span className="px-1.5 py-0.5 bg-white border border-rose-300 rounded font-black text-rose-700 text-[10px]">( X ) Arterial</span>
+                    <span className="text-slate-400">•</span>
+                    <span className="text-[11px] font-bold text-slate-700">Data/Hora do momento da solicitação</span>
+                  </div>
+                  <div className="text-[11px] text-slate-700 font-bold">
+                    <span className="inline-block px-1 bg-white border border-rose-300 rounded font-black text-rose-700 text-[10px] mr-1.5">[X]</span>
+                    2. Indicação: Avaliação e monitorização de oxigenoterapia ou ventilação
+                  </div>
+                </div>
+
+                {/* Occupied Beds List */}
+                {(() => {
+                  const occupied = patients.filter(p => p.name && p.name.trim() !== '').sort((a, b) => a.id - b.id);
+                  const allSelected = occupied.length > 0 && occupied.every(p => selectedGasometriaBedIds.includes(p.id));
+
+                  return (
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <span className="text-xs font-black text-slate-600 uppercase tracking-wider">
+                          Leitos Ocupados ({occupied.length})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (allSelected) {
+                              setSelectedGasometriaBedIds([]);
+                            } else {
+                              setSelectedGasometriaBedIds(occupied.map(p => p.id));
+                            }
+                          }}
+                          className="text-[10px] font-black uppercase text-rose-600 hover:text-rose-700 tracking-wider hover:underline"
+                        >
+                          {allSelected ? 'Desmarcar Todos' : 'Marcar Todos'}
+                        </button>
+                      </div>
+
+                      <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                        {occupied.map(p => {
+                          const isChecked = selectedGasometriaBedIds.includes(p.id);
+                          return (
+                            <label
+                              key={p.id}
+                              className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                                isChecked
+                                  ? 'bg-rose-50/60 border-rose-300 shadow-2xs'
+                                  : 'bg-slate-50/60 border-slate-200 hover:bg-slate-100/70'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => {
+                                    setSelectedGasometriaBedIds(prev =>
+                                      prev.includes(p.id)
+                                        ? prev.filter(id => id !== p.id)
+                                        : [...prev, p.id]
+                                    );
+                                  }}
+                                  className="w-4 h-4 text-rose-600 border-slate-300 rounded focus:ring-rose-500 shrink-0"
+                                />
+                                <div className={`w-8 h-8 rounded-lg font-black text-xs flex items-center justify-center shrink-0 ${
+                                  isChecked ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-600'
+                                }`}>
+                                  {p.id}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="text-xs font-black text-slate-800 uppercase truncate">
+                                    Leito {p.id} — {p.name}
+                                  </div>
+                                  <div className="text-[10px] font-bold text-slate-500">
+                                    {p.registro ? `Prontuário: ${p.registro}` : 'Sem prontuário'}
+                                    {p.age ? ` • ${p.age} anos` : ''}
+                                  </div>
+                                </div>
+                              </div>
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase shrink-0 ${
+                                isChecked ? 'bg-rose-100 text-rose-700' : 'bg-slate-200 text-slate-500'
+                              }`}>
+                                {isChecked ? 'Imprimir' : 'Ignorar'}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Footer */}
+              <div className="bg-white border-t border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowAllGasometriasModal(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={selectedGasometriaBedIds.length === 0}
+                  onClick={printSelectedGasometrias}
+                  className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md shadow-rose-100"
+                >
+                  <Printer size={16} />
+                  <span>Gerar Impressão ({selectedGasometriaBedIds.length})</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <WhatsAppSettingsModal
         isOpen={isWhatsAppSettingsOpen}
