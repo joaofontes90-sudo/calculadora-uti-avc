@@ -45,6 +45,8 @@ export const BackupModal: React.FC<BackupModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [isExitScreenActive, setIsExitScreenActive] = useState(false);
+  const [pastedJson, setPastedJson] = useState('');
+  const [showPasteBox, setShowPasteBox] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const fetchBackups = async () => {
@@ -199,6 +201,46 @@ export const BackupModal: React.FC<BackupModalProps> = ({
     reader.readAsText(file);
   };
 
+  // Restaurar a partir de JSON colado (ex.: resgate do Google AI Studio / localStorage)
+  const handleRestorePastedJson = () => {
+    if (!pastedJson.trim()) {
+      setStatusMessage({ type: 'error', text: 'Cole os dados copiados antes de clicar em Importar.' });
+      return;
+    }
+    try {
+      let parsed = JSON.parse(pastedJson.trim());
+      if (typeof parsed === 'string') {
+        parsed = JSON.parse(parsed);
+      }
+
+      const restoredPatients = parsed.patients || parsed;
+      if (!Array.isArray(restoredPatients)) {
+        throw new Error('Formato inválido: não foi encontrada a lista de pacientes.');
+      }
+
+      let restoredArchived = parsed.archivedPatients || [];
+      if (typeof restoredArchived === 'string') {
+        try { restoredArchived = JSON.parse(restoredArchived); } catch { restoredArchived = []; }
+      }
+
+      onRestoreData(restoredPatients, Array.isArray(restoredArchived) ? restoredArchived : []);
+      setPastedJson('');
+      setShowPasteBox(false);
+      setStatusMessage({
+        type: 'success',
+        text: 'Pacientes e checklists importados e salvos no servidor com sucesso!'
+      });
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (err: any) {
+      setStatusMessage({
+        type: 'error',
+        text: `Erro ao importar dados colados: ${err?.message || 'JSON inválido.'}`
+      });
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh] overflow-hidden">
@@ -335,6 +377,71 @@ export const BackupModal: React.FC<BackupModalProps> = ({
                   accept=".json"
                   className="hidden"
                 />
+              </div>
+
+              {/* OPÇÃO 2.5: Resgatar Dados do Google AI Studio / Colar JSON do Navegador */}
+              <div className="p-4 bg-amber-50/70 rounded-xl border border-amber-200 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10.5px] font-black uppercase text-amber-800 tracking-wider block">
+                      Resgatar Pacientes do Google AI Studio / Outro Navegador
+                    </span>
+                    <p className="text-[11px] text-amber-700 mt-0.5">
+                      Importe os pacientes e checklists de dias anteriores salvos no navegador antigo.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowPasteBox(!showPasteBox)}
+                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10.5px] font-black uppercase transition-all shrink-0 cursor-pointer"
+                  >
+                    {showPasteBox ? 'Ocultar' : 'Colar Dados'}
+                  </button>
+                </div>
+
+                {showPasteBox && (
+                  <div className="space-y-2.5 pt-2 border-t border-amber-200/70">
+                    <div className="bg-white p-2.5 rounded-lg border border-amber-200 text-[11px] text-slate-700 space-y-1.5">
+                      <p className="font-bold text-slate-800">Passo a passo rápido no navegador onde está o Google AI Studio:</p>
+                      <ol className="list-decimal list-inside space-y-1 text-[10.5px] text-slate-600">
+                        <li>Abra o link antigo do <b>Google AI Studio</b> onde estão seus pacientes.</li>
+                        <li>Aperte <b>F12</b> (ou clique com botão direito na tela → <b>Inspecionar</b>) e clique na aba <b>Console</b> (ou <b>Aplicativo → Armazenamento Local</b>).</li>
+                        <li>No <b>Console</b>, cole o comando abaixo e aperte <b>Enter</b>:</li>
+                      </ol>
+                      <div className="flex items-center gap-2 mt-1">
+                        <code className="flex-1 p-1.5 bg-slate-900 text-emerald-400 rounded text-[10px] font-mono overflow-x-auto select-all">
+                          {`copy(JSON.stringify({patients:JSON.parse(localStorage.getItem('uti_avc_patients')||'[]'),archivedPatients:JSON.parse(localStorage.getItem('uti_avc_archived_patients')||'[]')}))`}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              `copy(JSON.stringify({patients:JSON.parse(localStorage.getItem('uti_avc_patients')||'[]'),archivedPatients:JSON.parse(localStorage.getItem('uti_avc_archived_patients')||'[]')}))`
+                            );
+                            setStatusMessage({ type: 'info', text: 'Comando copiado! Cole no Console (F12) da aba do Google AI Studio e aperte Enter.' });
+                          }}
+                          className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded text-[10px] font-bold shrink-0 cursor-pointer"
+                        >
+                          Copiar Comando
+                        </button>
+                      </div>
+                    </div>
+
+                    <textarea
+                      value={pastedJson}
+                      onChange={(e) => setPastedJson(e.target.value)}
+                      placeholder='Cole aqui (Ctrl+V) o texto copiado do Google AI Studio...'
+                      rows={4}
+                      className="w-full p-2.5 bg-white border border-amber-300 rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRestorePastedJson}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase shadow-sm transition-all cursor-pointer"
+                    >
+                      Importar Pacientes e Checklists Agora
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* OPÇÃO 3: Lista de Backups Salvos na Pasta */}

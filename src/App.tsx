@@ -35,7 +35,9 @@ import {
   Archive,
   UserCheck,
   FileUp,
-  UploadCloud
+  UploadCloud,
+  Lock,
+  LogOut
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
@@ -3176,18 +3178,38 @@ export default function InfusionApp() {
   const [restoreTargetPatient, setRestoreTargetPatient] = useState<ArchivedPatient | null>(null);
   const [restoreChosenBedId, setRestoreChosenBedId] = useState<number | null>(null);
 
+  // --- Autenticação (Login: medico / Senha: uavc) ---
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return typeof window !== 'undefined' && localStorage.getItem('uti_avc_auth_v1') === 'true';
+  });
+  const [loginUser, setLoginUser] = useState('');
+  const [loginPass, setLoginPass] = useState('');
+  const [loginError, setLoginError] = useState('');
+
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loginUser.trim().toLowerCase() === 'medico' && loginPass.trim().toLowerCase() === 'uavc') {
+      localStorage.setItem('uti_avc_auth_v1', 'true');
+      setIsAuthenticated(true);
+      setLoginError('');
+    } else {
+      setLoginError('Usuário ou senha incorretos.');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('uti_avc_auth_v1');
+    setIsAuthenticated(false);
+    setLoginUser('');
+    setLoginPass('');
+  };
+
   // --- Backup e Sincronização com Servidor ---
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [serverSyncReady, setServerSyncReady] = useState(false);
 
-  // Carrega automaticamente dados do servidor caso este navegador esteja vazio
+  // Carrega sempre os dados mais recentes do servidor ao abrir o link em qualquer dispositivo
   useEffect(() => {
-    const hasLocalData = patients.some(p => (p.name && p.name.trim() !== '') || (p.infusions && p.infusions.length > 0));
-    if (hasLocalData) {
-      setServerSyncReady(true);
-      return;
-    }
-
     fetch('/api/backup/carregar')
       .then(res => res.json())
       .then(resData => {
@@ -3259,10 +3281,20 @@ export default function InfusionApp() {
   }, [patients, archivedPatients]);
 
   const handleRestoreData = (restoredPatients: Patient[], restoredArchived?: ArchivedPatient[]) => {
-    setPatients(restoredPatients);
+    const normalizedPatients = restoredPatients.map(p => ({
+      ...p,
+      dailyChecklists: ensureDailyChecklists(p)
+    }));
+    const finalArchived = restoredArchived ?? archivedPatients;
+    setPatients(normalizedPatients);
     if (restoredArchived) {
       setArchivedPatients(restoredArchived);
     }
+    fetch('/api/backup/salvar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patients: normalizedPatients, archivedPatients: finalArchived })
+    }).catch(() => {});
   };
 
   // --- Importação de Evolução (.docx / Word) ---
@@ -6287,6 +6319,61 @@ export default function InfusionApp() {
     }
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans">
+        <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+          <div className="bg-slate-50 px-6 py-6 border-b border-slate-100 text-center">
+            <div className="w-14 h-14 mx-auto bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200 mb-3">
+              <Lock size={26} />
+            </div>
+            <h1 className="text-xl font-black text-slate-800 uppercase tracking-tight">UAVC APP</h1>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Acesso Restrito • Unidade de AVC</p>
+          </div>
+          <form onSubmit={handleLoginSubmit} className="p-6 space-y-4">
+            {loginError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold flex items-center gap-2">
+                <AlertCircle size={15} />
+                <span>{loginError}</span>
+              </div>
+            )}
+            <div>
+              <label className="block text-[11px] font-black uppercase text-slate-600 tracking-wider mb-1.5">
+                Usuário
+              </label>
+              <input
+                type="text"
+                value={loginUser}
+                onChange={(e) => setLoginUser(e.target.value)}
+                placeholder="Digite o usuário"
+                autoFocus
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-black uppercase text-slate-600 tracking-wider mb-1.5">
+                Senha
+              </label>
+              <input
+                type="password"
+                value={loginPass}
+                onChange={(e) => setLoginPass(e.target.value)}
+                placeholder="Digite a senha"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-blue-200 transition-all cursor-pointer"
+            >
+              Entrar no Sistema
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col">
       {/* Header */}
@@ -6347,6 +6434,15 @@ export default function InfusionApp() {
               )}
             </button>
 
+            <button
+              onClick={() => setIsBackupModalOpen(true)}
+              className="flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 px-3.5 py-2 rounded-lg text-xs font-bold transition-all shadow-sm hover:-translate-y-0.5"
+              title="Central de Backups e Importação de Dados (Google AI Studio / JSON)"
+            >
+              <Save size={14} className="text-emerald-600" />
+              <span>BACKUP / IMPORTAR</span>
+            </button>
+
             {/* Divider */}
             <div className="h-6 w-[1px] bg-slate-200 hidden md:block" />
 
@@ -6373,6 +6469,15 @@ export default function InfusionApp() {
             >
               <Heart size={14} />
               <span>ANALGESIA</span>
+            </button>
+
+            <button
+               onClick={handleLogout}
+               className="flex items-center gap-1.5 bg-slate-100 text-slate-600 border border-slate-200 px-3 py-2 rounded-lg text-xs font-bold hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition-all"
+               title="Sair da conta"
+            >
+              <LogOut size={14} />
+              <span>SAIR</span>
             </button>
           </div>
         </div>
