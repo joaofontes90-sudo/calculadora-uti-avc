@@ -3,6 +3,17 @@ import path from 'path';
 import os from 'os';
 
 export function getBackupDirectory() {
+  if (process.env.BACKUP_DIR) {
+    try {
+      if (!fs.existsSync(process.env.BACKUP_DIR)) {
+        fs.mkdirSync(process.env.BACKUP_DIR, { recursive: true });
+      }
+      return process.env.BACKUP_DIR;
+    } catch (e) {
+      console.warn('[Backup] Erro ao usar BACKUP_DIR:', e.message);
+    }
+  }
+
   const isWindows = process.platform === 'win32';
   let dir;
 
@@ -62,6 +73,21 @@ export function saveBackupData(payload) {
   // 2. Atualiza arquivo "latest"
   const latestPath = path.join(backupDir, latestFileName);
   fs.writeFileSync(latestPath, jsonStr, 'utf-8');
+
+  // 3. Mantém apenas os 30 backups com timestamp mais recentes para não lotar o disco do servidor
+  try {
+    const allFiles = fs.readdirSync(backupDir)
+      .filter(f => f.startsWith('backup_uti_avc_20') && f.endsWith('.json'))
+      .sort()
+      .reverse();
+    if (allFiles.length > 30) {
+      allFiles.slice(30).forEach(oldFile => {
+        try {
+          fs.unlinkSync(path.join(backupDir, oldFile));
+        } catch (e) {}
+      });
+    }
+  } catch (e) {}
 
   console.log(`[Backup] Backup salvo com sucesso em: ${timeStampedPath}`);
 

@@ -1,9 +1,79 @@
 import puppeteer from 'puppeteer-core';
 import { createRequire } from 'module';
 import path from 'path';
+import fs from 'fs';
+import os from 'os';
+
+// Polyfills para ambientes Windows/Electron sem @napi-rs/canvas nativo
+if (typeof globalThis.DOMMatrix === 'undefined') {
+  globalThis.DOMMatrix = class DOMMatrix {
+    constructor(init) {
+      this.a = 1; this.b = 0; this.c = 0; this.d = 1; this.e = 0; this.f = 0;
+      if (Array.isArray(init) && init.length >= 6) {
+        [this.a, this.b, this.c, this.d, this.e, this.f] = init;
+      }
+    }
+    translate() { return this; }
+    scale() { return this; }
+    multiply() { return this; }
+    multiplySelf() { return this; }
+    preMultiplySelf() { return this; }
+    invertSelf() { return this; }
+  };
+}
+if (typeof globalThis.ImageData === 'undefined') {
+  globalThis.ImageData = class ImageData {
+    constructor(w, h) {
+      this.width = w;
+      this.height = h;
+      this.data = new Uint8ClampedArray((w || 1) * (h || 1) * 4);
+    }
+  };
+}
+if (typeof globalThis.Path2D === 'undefined') {
+  globalThis.Path2D = class Path2D {
+    addPath() {}
+    rect() {}
+  };
+}
 
 const require = createRequire(import.meta.url);
 const { PDFParse } = require('pdf-parse');
+
+function findBrowserExecutable() {
+  if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+
+  const candidates = process.platform === 'win32'
+    ? [
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+        path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe'),
+        'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+        'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+        path.join(process.env.LOCALAPPDATA || '', 'Microsoft\\Edge\\Application\\msedge.exe'),
+      ]
+    : process.platform === 'darwin'
+    ? [
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+        '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+        '/Applications/Chromium.app/Contents/MacOS/Chromium',
+      ]
+    : [
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/google-chrome-stable',
+        '/usr/bin/google-chrome',
+      ];
+
+  for (const candidate of candidates) {
+    if (candidate && fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  throw new Error('Navegador Chromium/Chrome não encontrado no servidor para buscar laudos.');
+}
 
 export function removeAccents(str) {
   if (!str) return '';
@@ -83,8 +153,11 @@ export async function searchAndFetchReports(targetPatientName, credentials = {})
 
   console.log(`[Telemedicina] Iniciando busca para: "${normalizedTarget}"`);
 
+  const executablePath = findBrowserExecutable();
+  const userDataDir = path.join(os.tmpdir(), 'chrome-telemedicina-profile');
+
   const browser = await puppeteer.launch({
-    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    executablePath,
     headless: "new",
     args: [
       '--no-sandbox',
@@ -92,7 +165,7 @@ export async function searchAndFetchReports(targetPatientName, credentials = {})
       '--disable-crash-reporter',
       '--disable-breakpad',
       '--disable-dev-shm-usage',
-      '--user-data-dir=/tmp/chrome-telemedicina-profile',
+      `--user-data-dir=${userDataDir}`,
       '--no-zygote'
     ]
   });

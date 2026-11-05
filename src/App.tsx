@@ -3176,8 +3176,60 @@ export default function InfusionApp() {
   const [restoreTargetPatient, setRestoreTargetPatient] = useState<ArchivedPatient | null>(null);
   const [restoreChosenBedId, setRestoreChosenBedId] = useState<number | null>(null);
 
-  // --- Backup e Segurança no Computador ---
+  // --- Backup e Sincronização com Servidor ---
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [serverSyncReady, setServerSyncReady] = useState(false);
+
+  // Carrega automaticamente dados do servidor caso este navegador esteja vazio
+  useEffect(() => {
+    const hasLocalData = patients.some(p => (p.name && p.name.trim() !== '') || (p.infusions && p.infusions.length > 0));
+    if (hasLocalData) {
+      setServerSyncReady(true);
+      return;
+    }
+
+    fetch('/api/backup/carregar')
+      .then(res => res.json())
+      .then(resData => {
+        if (resData?.success && resData?.data?.patients && Array.isArray(resData.data.patients)) {
+          const serverHasPatients = resData.data.patients.some(
+            (p: Patient) => (p.name && p.name.trim() !== '') || (p.infusions && p.infusions.length > 0)
+          );
+          if (serverHasPatients) {
+            setPatients(resData.data.patients.map((p: Patient) => ({
+              ...p,
+              dailyChecklists: ensureDailyChecklists(p)
+            })));
+          }
+          if (Array.isArray(resData.data.archivedPatients) && resData.data.archivedPatients.length > 0) {
+            setArchivedPatients(resData.data.archivedPatients);
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setServerSyncReady(true);
+      });
+  }, []);
+
+  // Salva automaticamente no servidor a cada modificação (debounce de 1.5s)
+  useEffect(() => {
+    if (!serverSyncReady) return;
+    const hasAnyData =
+      patients.some(p => (p.name && p.name.trim() !== '') || (p.infusions && p.infusions.length > 0)) ||
+      archivedPatients.length > 0;
+    if (!hasAnyData) return;
+
+    const timer = setTimeout(() => {
+      fetch('/api/backup/salvar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patients, archivedPatients })
+      }).catch(() => {});
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [patients, archivedPatients, serverSyncReady]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
