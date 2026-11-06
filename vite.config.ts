@@ -148,6 +148,121 @@ function backupVitePlugin() {
           res.end('Erro ao abrir PDF.');
         }
       });
+
+      server.middlewares.use('/api/lab-scanner/criar-sessao', async (req: any, res: any, next: any) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', (chunk: any) => { body += chunk; });
+        req.on('end', async () => {
+          try {
+            const parsed = JSON.parse(body || '{}');
+            const { createLabSession } = await import('./src/server/labScannerService.js');
+            const result = await createLabSession({
+              origin: parsed.origin || 'http://localhost:3000',
+              bedId: parsed.bedId,
+              patientName: parsed.patientName,
+              dayIndex: parsed.dayIndex,
+              checklistDate: parsed.checklistDate,
+            });
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(result));
+          } catch (err: any) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: false, error: err?.message }));
+          }
+        });
+      });
+
+      server.middlewares.use('/api/lab-scanner/status', async (req: any, res: any, next: any) => {
+        if (req.method !== 'GET') return next();
+        try {
+          const url = new URL(req.url, 'http://localhost');
+          const sessionId = url.searchParams.get('session') || '';
+          const { getLabSession, getGeminiApiKey } = await import('./src/server/labScannerService.js');
+          const session = getLabSession(sessionId);
+          if (!session) {
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: false, error: 'Sessão não encontrada.' }));
+            return;
+          }
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({
+            success: true,
+            status: session.status,
+            extractedData: session.extractedData,
+            error: session.error,
+            hasApiKey: Boolean(getGeminiApiKey()),
+          }));
+        } catch (err: any) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ success: false, error: err?.message }));
+        }
+      });
+
+      server.middlewares.use('/api/lab-scanner/salvar-api-key', async (req: any, res: any, next: any) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', (chunk: any) => { body += chunk; });
+        req.on('end', async () => {
+          try {
+            const parsed = JSON.parse(body || '{}');
+            const { saveGeminiApiKey } = await import('./src/server/labScannerService.js');
+            const result = saveGeminiApiKey(parsed.apiKey);
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(result));
+          } catch (err: any) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: false, error: err?.message }));
+          }
+        });
+      });
+
+      server.middlewares.use('/api/lab-scanner/processar', async (req: any, res: any, next: any) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', (chunk: any) => { body += chunk; });
+        req.on('end', async () => {
+          try {
+            const parsed = JSON.parse(body || '{}');
+            const { processLabImagesWithAI } = await import('./src/server/labScannerService.js');
+            const result = await processLabImagesWithAI({
+              sessionId: parsed.sessionId,
+              images: parsed.images,
+              bedId: parsed.bedId,
+              dayIndex: parsed.dayIndex,
+            });
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(result));
+          } catch (err: any) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: false, error: err?.message || 'Erro ao analisar foto do exame.' }));
+          }
+        });
+      });
+
+      server.middlewares.use('/mobile-lab', async (req: any, res: any, next: any) => {
+        if (req.method !== 'GET') return next();
+        try {
+          const url = new URL(req.url, 'http://localhost');
+          const sessionId = url.searchParams.get('session') || '';
+          const { renderMobileLabPage } = await import('./src/server/labScannerService.js');
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.end(renderMobileLabPage(sessionId));
+        } catch (err: any) {
+          res.statusCode = 500;
+          res.end('Erro ao carregar página mobile.');
+        }
+      });
     }
   };
 }
