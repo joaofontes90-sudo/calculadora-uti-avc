@@ -18,10 +18,249 @@ export const ClinicalForm: React.FC<ClinicalFormProps> = ({
   theme,
 }) => {
   const [isSearchingTele, setIsSearchingTele] = useState(false);
-  const [teleExams, setTeleExams] = useState<any[] | null>(null);
-  const [teleError, setTeleError] = useState<string | null>(null);
-  const [showTeleModal, setShowTeleModal] = useState(false);
-  const [selectedExams, setSelectedExams] = useState<Record<string, boolean>>({});
+
+  const openLaudosInNewTab = (targetWindow: Window, patientName: string, exams: any[]) => {
+    const escapeHtml = (str: string) =>
+      String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+
+    const cardsHtml = exams.length === 0
+      ? `<div class="empty-box">Nenhum laudo liberado encontrado no Portal Telemedicina para <strong>${escapeHtml(patientName)}</strong>.</div>`
+      : exams.map((ex, idx) => {
+          const examTitle = escapeHtml(ex.type || `Exame #${idx + 1}`);
+          const examDate = escapeHtml(ex.date || 'Sem data');
+          const examId = escapeHtml(ex.examId || '');
+          const examLaudo = escapeHtml(ex.laudo || '');
+          return `
+            <div class="laudo-card">
+              <div class="laudo-header">
+                <div>
+                  <span class="badge-num">#${idx + 1}</span>
+                  <span class="exam-type">${examTitle}</span>
+                  ${examId ? `<span class="exam-id">ID: ${examId}</span>` : ''}
+                </div>
+                <div class="date-group">
+                  <span class="exam-date">📅 Data do Exame: <strong>${examDate}</strong></span>
+                  <button class="btn-copy-sm" onclick="copyTextById('date-${idx}', this)">Copiar Data</button>
+                  <button class="btn-copy" onclick="copyTextById('laudo-${idx}', this)">Copiar Laudo</button>
+                  <button class="btn-copy-both" onclick="copyTextById('full-${idx}', this)">Copiar Data + Laudo</button>
+                </div>
+              </div>
+              <textarea id="date-${idx}" class="hidden-copy" readonly>${examDate}</textarea>
+              <textarea id="full-${idx}" class="hidden-copy" readonly>${examDate} - ${examTitle}\n${examLaudo}</textarea>
+              <textarea id="laudo-${idx}" class="laudo-textarea" readonly onclick="this.select()">${examLaudo}</textarea>
+            </div>
+          `;
+        }).join('');
+
+    const allCombined = exams
+      .map((ex, idx) => `=== EXAME #${idx + 1}: ${ex.type || 'LAUDO'} (${ex.date || 'Sem data'}) ===\n${ex.laudo || ''}`)
+      .join('\n\n----------------------------------------\n\n');
+
+    targetWindow.document.open();
+    targetWindow.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Laudos Portal Telemedicina - ${escapeHtml(patientName)}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      margin: 0;
+      padding: 24px 16px 48px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .top-bar {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+    .title {
+      font-size: 18px;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: #1e3a8a;
+      margin: 0;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #475569;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    .laudo-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+    }
+    .laudo-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .badge-num {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-weight: 900;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-right: 6px;
+    }
+    .exam-type {
+      font-weight: 900;
+      font-size: 14px;
+      text-transform: uppercase;
+      color: #0f172a;
+    }
+    .exam-id {
+      font-size: 11px;
+      color: #64748b;
+      margin-left: 8px;
+      font-weight: 600;
+    }
+    .date-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    .exam-date {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #1e293b;
+    }
+    .btn-copy, .btn-copy-sm, .btn-copy-both, .btn-copy-all {
+      border: none;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 11px;
+      text-transform: uppercase;
+      cursor: pointer;
+      padding: 7px 12px;
+      transition: all 0.15s;
+    }
+    .btn-copy {
+      background: #2563eb;
+      color: #ffffff;
+    }
+    .btn-copy:hover { background: #1d4ed8; }
+    .btn-copy-sm {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+    .btn-copy-sm:hover { background: #cbd5e1; }
+    .btn-copy-both {
+      background: #0f172a;
+      color: #ffffff;
+    }
+    .btn-copy-both:hover { background: #1e293b; }
+    .btn-copy-all {
+      background: #059669;
+      color: #ffffff;
+      padding: 10px 16px;
+      font-size: 12px;
+    }
+    .btn-copy-all:hover { background: #047857; }
+    .laudo-textarea {
+      width: 100%;
+      min-height: 150px;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      background: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: #0f172a;
+      resize: vertical;
+    }
+    .hidden-copy {
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .empty-box {
+      background: #ffffff;
+      border: 1px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 40px 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <div>
+        <h1 class="title">Laudos — Portal Telemedicina</h1>
+        <div class="subtitle">Paciente: <strong>${escapeHtml(patientName)}</strong> • ${exams.length} laudo(s) encontrado(s)</div>
+      </div>
+      ${exams.length > 0 ? `<button class="btn-copy-all" onclick="copyTextById('all-laudos', this)">Copiar Todos os Laudos</button>` : ''}
+    </div>
+    <textarea id="all-laudos" class="hidden-copy" readonly>${escapeHtml(allCombined)}</textarea>
+    ${cardsHtml}
+  </div>
+  <script>
+    function copyTextById(id, btn) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var text = el.value;
+      var orig = btn.innerText;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          btn.innerText = '✓ Copiado!';
+          setTimeout(function() { btn.innerText = orig; }, 1600);
+        });
+      } else {
+        el.style.position = 'fixed';
+        el.style.opacity = '1';
+        el.select();
+        document.execCommand('copy');
+        el.style.position = 'absolute';
+        el.style.opacity = '0';
+        btn.innerText = '✓ Copiado!';
+        setTimeout(function() { btn.innerText = orig; }, 1600);
+      }
+    }
+  </script>
+</body>
+</html>`);
+    targetWindow.document.close();
+  };
 
   const handleBuscarTelemedicina = async () => {
     if (!patient.name || patient.name.trim() === '') {
@@ -29,10 +268,63 @@ export const ClinicalForm: React.FC<ClinicalFormProps> = ({
       return;
     }
 
-    setShowTeleModal(true);
+    const laudosWindow = window.open('', '_blank');
+    if (!laudosWindow) {
+      alert('Por favor, permita pop-ups para este site para abrir a aba com os laudos.');
+      return;
+    }
+
+    laudosWindow.document.open();
+    laudosWindow.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Buscando Laudos - ${patient.name}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .box {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 36px 32px;
+      max-width: 460px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+    }
+    .spinner {
+      width: 42px;
+      height: 42px;
+      border: 4px solid #dbeafe;
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 18px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h2 { font-size: 15px; text-transform: uppercase; margin: 0 0 8px; color: #1e3a8a; }
+    p { font-size: 13px; color: #475569; margin: 0; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="spinner"></div>
+    <h2>Acessando Portal Telemedicina...</h2>
+    <p>Buscando todos os laudos liberados do paciente <strong>${patient.name}</strong>.<br/>Isso pode levar de 15 a 30 segundos.</p>
+  </div>
+</body>
+</html>`);
+    laudosWindow.document.close();
+
     setIsSearchingTele(true);
-    setTeleError(null);
-    setTeleExams(null);
 
     try {
       const res = await fetch('/api/telemedicina/buscar-laudos', {
@@ -46,65 +338,24 @@ export const ClinicalForm: React.FC<ClinicalFormProps> = ({
         throw new Error(data.error || 'Erro ao consultar o Portal Telemedicina.');
       }
 
-      setTeleExams(data.exams || []);
-      const initialSelected: Record<string, boolean> = {};
-      (data.exams || []).forEach((ex: any) => {
-        initialSelected[ex.examId] = true;
-      });
-      setSelectedExams(initialSelected);
+      openLaudosInNewTab(laudosWindow, patient.name, data.exams || []);
     } catch (err: any) {
-      setTeleError(err?.message || 'Falha na comunicação com o portal.');
+      const errMsg = err?.message || 'Falha na comunicação com o portal.';
+      laudosWindow.document.open();
+      laudosWindow.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><title>Erro ao buscar laudos</title></head>
+<body style="font-family: sans-serif; background: #fef2f2; color: #991b1b; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0;">
+  <div style="background:#fff; border:1px solid #fecaca; padding:28px; border-radius:12px; max-width:480px; text-align:center;">
+    <h3 style="margin-top:0;">Não foi possível carregar os laudos</h3>
+    <p style="font-size:13px;">${errMsg}</p>
+  </div>
+</body>
+</html>`);
+      laudosWindow.document.close();
     } finally {
       setIsSearchingTele(false);
     }
-  };
-
-  const handleConfirmarLaudos = () => {
-    if (!teleExams || teleExams.length === 0) {
-      setShowTeleModal(false);
-      return;
-    }
-
-    const approved = teleExams.filter(ex => selectedExams[ex.examId]);
-    if (approved.length === 0) {
-      setShowTeleModal(false);
-      return;
-    }
-
-    // Prioriza tomografia de crânio para a TC de Admissão
-    let admissionExam = approved.find(ex => !ex.isAngio && isCranialTc(ex.laudo || ex.type)) || approved.find(ex => !ex.isAngio) || approved[0];
-    let remaining = approved.filter(ex => ex.examId !== admissionExam.examId);
-    let angioExam = approved.find(ex => ex.isAngio);
-
-    const updatedPatient: Patient = {
-      ...patient
-    };
-
-    if (admissionExam) {
-      updatedPatient.tcAdmissaoData = admissionExam.date || patient.tcAdmissaoData;
-      updatedPatient.tcAdmissaoLaudo = admissionExam.laudo || patient.tcAdmissaoLaudo;
-    }
-
-    if (angioExam) {
-      updatedPatient.angiotomoDescricao = angioExam.laudo || patient.angiotomoDescricao;
-    }
-
-    const controlExams = remaining.filter(ex => ex.examId !== angioExam?.examId);
-    if (controlExams.length > 0) {
-      const newControls: TcControleItem[] = controlExams.map(ex => ({
-        id: 'tc-' + ex.examId + '-' + Date.now(),
-        data: ex.date,
-        laudo: ex.laudo
-      }));
-      updatedPatient.tcControles = [...(patient.tcControles || []), ...newControls];
-      if (!updatedPatient.tcControleData && newControls.length > 0) {
-        updatedPatient.tcControleData = newControls[0].data;
-        updatedPatient.tcControleLaudo = newControls[0].laudo;
-      }
-    }
-
-    updatePatient(updatedPatient);
-    setShowTeleModal(false);
   };
 
   const addTcControle = () => {
@@ -384,12 +635,13 @@ export const ClinicalForm: React.FC<ClinicalFormProps> = ({
           <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Histórico & Exames de Imagem</span>
           <button
             type="button"
+            disabled={isSearchingTele}
             onClick={handleBuscarTelemedicina}
-            className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[9.5px] font-black uppercase shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer hover:-translate-y-0.5"
-            title="Acessar o Portal Telemedicina e buscar os laudos deste paciente"
+            className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-lg text-[9.5px] font-black uppercase shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer hover:-translate-y-0.5"
+            title="Abrir nova aba com todos os laudos liberados deste paciente no Portal Telemedicina"
           >
-            <Search size={11} />
-            <span>Buscar Laudos (Portal)</span>
+            {isSearchingTele ? <Loader2 size={11} className="animate-spin" /> : <Search size={11} />}
+            <span>{isSearchingTele ? 'Buscando...' : 'Buscar Laudos (Portal)'}</span>
           </button>
         </div>
 
@@ -511,169 +763,6 @@ export const ClinicalForm: React.FC<ClinicalFormProps> = ({
           </div>
         </div>
       </div>
-
-      {/* MODAL PORTAL TELEMEDICINA */}
-      {showTeleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs text-left">
-          <div className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] border border-slate-200">
-            {/* Header */}
-            <div className="bg-blue-600 px-6 py-4 text-white flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-white/10 rounded-xl">
-                  <Search size={20} />
-                </div>
-                <div>
-                  <h3 className="font-black text-sm uppercase tracking-wider">Portal Telemedicina — Laudos</h3>
-                  <p className="text-[11px] opacity-85 font-medium">Paciente: <strong>{patient.name || 'Sem nome'}</strong></p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowTeleModal(false)}
-                className="p-1 rounded-lg hover:bg-white/10 transition-colors text-white/80 hover:text-white cursor-pointer"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 overflow-y-auto space-y-4 bg-slate-50 flex-1">
-              {isSearchingTele && (
-                <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
-                  <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-                  <div>
-                    <h4 className="font-black text-slate-700 text-xs uppercase tracking-wide">Acessando Portal Telemedicina...</h4>
-                    <p className="text-[11px] text-slate-400 mt-1 max-w-md">
-                      Efetuando login, buscando exames de <strong>{patient.name}</strong> e baixando os laudos liberados.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {teleError && !isSearchingTele && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-xl space-y-2">
-                  <div className="flex items-center gap-2 text-red-700 font-bold text-xs">
-                    <AlertCircle size={16} />
-                    <span>Não foi possível carregar os laudos</span>
-                  </div>
-                  <p className="text-[11px] text-red-600">{teleError}</p>
-                  <button
-                    type="button"
-                    onClick={handleBuscarTelemedicina}
-                    className="mt-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all uppercase cursor-pointer"
-                  >
-                    Tentar Novamente
-                  </button>
-                </div>
-              )}
-
-              {!isSearchingTele && !teleError && teleExams && teleExams.length === 0 && (
-                <div className="py-12 flex flex-col items-center justify-center text-center space-y-3 bg-white rounded-xl border border-dashed border-slate-200">
-                  <FileText className="w-10 h-10 text-slate-300" />
-                  <div>
-                    <h4 className="font-black text-slate-600 text-xs uppercase tracking-wide">Nenhum laudo encontrado</h4>
-                    <p className="text-[11px] text-slate-400 mt-1 max-w-sm">
-                      Não foram encontrados laudos liberados de tomografia com o nome <strong>{patient.name}</strong> no portal.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {!isSearchingTele && !teleError && teleExams && teleExams.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-xs font-black text-slate-700 uppercase tracking-wide">
-                      {teleExams.length} laudo(s) de tomografia encontrado(s):
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-bold">Ordenados por data</span>
-                  </div>
-
-                  {teleExams.map((ex, index) => {
-                    const isSelected = selectedExams[ex.examId] ?? true;
-                    const isFirst = index === 0;
-                    return (
-                      <div
-                        key={ex.examId}
-                        onClick={() => setSelectedExams({ ...selectedExams, [ex.examId]: !isSelected })}
-                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-white border-blue-400 shadow-sm'
-                            : 'bg-slate-100 border-slate-200 opacity-60'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => {}}
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 pointer-events-none"
-                            />
-                            <div>
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-black text-slate-800 text-xs uppercase">{ex.type}</span>
-                                {isFirst && !ex.isAngio && (
-                                  <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md text-[9px] font-black uppercase tracking-wider">
-                                    TC de Admissão
-                                  </span>
-                                )}
-                                {(!isFirst || ex.isAngio) && !ex.isAngio && (
-                                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md text-[9px] font-black uppercase tracking-wider">
-                                    TC de Controle
-                                  </span>
-                                )}
-                                {ex.isAngio && (
-                                  <span className="px-2 py-0.5 bg-purple-100 text-purple-800 rounded-md text-[9px] font-black uppercase tracking-wider">
-                                    Angiotomografia
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[10px] text-slate-500 font-bold mt-0.5">
-                                Data: <strong>{ex.date}</strong> | ID: {ex.examId}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Prévia do texto do laudo */}
-                        <div className="mt-2.5 p-2.5 bg-slate-50 border border-slate-100 rounded-lg max-h-28 overflow-y-auto text-[11px] text-slate-600 whitespace-pre-line font-mono custom-scrollbar">
-                          {ex.laudo}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            {!isSearchingTele && teleExams && teleExams.length > 0 && (
-              <div className="p-4 bg-slate-100 border-t border-slate-200 flex items-center justify-between shrink-0">
-                <span className="text-[11px] text-slate-500 font-medium">
-                  A TC mais antiga preencherá a <strong>Admissão</strong> e as demais as <strong>Controles</strong>.
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowTeleModal(false)}
-                    className="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 font-bold hover:bg-slate-200 transition-colors uppercase text-xs cursor-pointer"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleConfirmarLaudos}
-                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black transition-all uppercase text-xs shadow-md flex items-center gap-1.5 active:scale-95 cursor-pointer"
-                  >
-                    <Check size={14} strokeWidth={2.5} />
-                    <span>Confirmar e Inserir na Ficha</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

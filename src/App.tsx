@@ -37,7 +37,8 @@ import {
   FileUp,
   UploadCloud,
   Lock,
-  LogOut
+  LogOut,
+  Ban
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
@@ -3197,7 +3198,14 @@ export default function InfusionApp() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/backup/salvar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patients, archivedPatients })
+      });
+    } catch (e) {}
     localStorage.removeItem('uti_avc_auth_v1');
     setIsAuthenticated(false);
     setLoginUser('');
@@ -3208,33 +3216,56 @@ export default function InfusionApp() {
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [serverSyncReady, setServerSyncReady] = useState(false);
 
-  // Carrega sempre os dados mais recentes do servidor ao abrir o link em qualquer dispositivo
+  // Carrega sempre os dados mais recentes do servidor ao abrir o link ou voltar para a aba;
+  // caso o servidor ainda esteja vazio e o navegador tenha dados locais, salva automaticamente no servidor!
   useEffect(() => {
-    fetch('/api/backup/carregar')
-      .then(res => res.json())
-      .then(resData => {
-        if (resData?.success && resData?.data?.patients && Array.isArray(resData.data.patients)) {
-          const serverHasPatients = resData.data.patients.some(
+    const syncWithServer = () => {
+      fetch('/api/backup/carregar')
+        .then(res => res.json())
+        .then(resData => {
+          const serverPatients = resData?.data?.patients;
+          const serverArchived = resData?.data?.archivedPatients;
+          const serverHasPatients = Array.isArray(serverPatients) && serverPatients.some(
             (p: Patient) => (p.name && p.name.trim() !== '') || (p.infusions && p.infusions.length > 0)
           );
-          if (serverHasPatients) {
-            setPatients(resData.data.patients.map((p: Patient) => ({
-              ...p,
-              dailyChecklists: ensureDailyChecklists(p)
-            })));
+          const serverHasArchived = Array.isArray(serverArchived) && serverArchived.length > 0;
+
+          if (resData?.success && (serverHasPatients || serverHasArchived)) {
+            if (serverHasPatients) {
+              setPatients(serverPatients.map((p: Patient) => ({
+                ...p,
+                dailyChecklists: ensureDailyChecklists(p)
+              })));
+            }
+            if (serverHasArchived) {
+              setArchivedPatients(serverArchived);
+            }
+          } else {
+            // Servidor vazio: se este navegador já tiver pacientes, envia automaticamente para o servidor
+            const localHasData =
+              patients.some(p => (p.name && p.name.trim() !== '') || (p.infusions && p.infusions.length > 0)) ||
+              archivedPatients.length > 0;
+            if (localHasData) {
+              fetch('/api/backup/salvar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ patients, archivedPatients })
+              }).catch(() => {});
+            }
           }
-          if (Array.isArray(resData.data.archivedPatients) && resData.data.archivedPatients.length > 0) {
-            setArchivedPatients(resData.data.archivedPatients);
-          }
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        setServerSyncReady(true);
-      });
+        })
+        .catch(() => {})
+        .finally(() => {
+          setServerSyncReady(true);
+        });
+    };
+
+    syncWithServer();
+    window.addEventListener('focus', syncWithServer);
+    return () => window.removeEventListener('focus', syncWithServer);
   }, []);
 
-  // Salva automaticamente no servidor a cada modificação (debounce de 1.5s)
+  // Salva automaticamente no servidor a cada modificação (debounce de 800ms)
   useEffect(() => {
     if (!serverSyncReady) return;
     const hasAnyData =
@@ -3248,7 +3279,7 @@ export default function InfusionApp() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ patients, archivedPatients })
       }).catch(() => {});
-    }, 1500);
+    }, 800);
 
     return () => clearTimeout(timer);
   }, [patients, archivedPatients, serverSyncReady]);
@@ -6473,11 +6504,11 @@ export default function InfusionApp() {
 
             <button
                onClick={handleLogout}
-               className="flex items-center gap-1.5 bg-slate-100 text-slate-600 border border-slate-200 px-3 py-2 rounded-lg text-xs font-bold hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition-all"
-               title="Sair da conta"
+               className="flex items-center gap-1.5 bg-slate-100 text-slate-700 border border-slate-300 px-3.5 py-2 rounded-lg text-xs font-black hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all cursor-pointer"
+               title="Salvar todos os dados no servidor e sair da conta"
             >
               <LogOut size={14} />
-              <span>SAIR</span>
+              <span>SAIR E SALVAR</span>
             </button>
           </div>
         </div>
@@ -7738,11 +7769,11 @@ export default function InfusionApp() {
 
         <button
           type="button"
-          onClick={handleOpenWhatsAppSend}
-          className="flex items-center gap-1.5 bg-emerald-600/90 hover:bg-emerald-700 text-white font-black text-[11px] px-3 py-2 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 uppercase tracking-wider border border-emerald-500"
-          title="Enviar todos os checklists para o WhatsApp via Evolution API"
+          disabled
+          className="flex items-center gap-1.5 bg-slate-300 text-slate-500 font-black text-[11px] px-3 py-2 rounded-xl shadow-sm uppercase tracking-wider border border-slate-400 cursor-not-allowed select-none opacity-80"
+          title="Envio para WhatsApp temporariamente desativado"
         >
-          <MessageSquare size={14} />
+          <Ban size={14} className="text-slate-500" />
           <span>Enviar para WhatsApp</span>
         </button>
 
