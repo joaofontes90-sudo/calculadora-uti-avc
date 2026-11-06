@@ -3198,14 +3198,18 @@ export default function InfusionApp() {
     }
   };
 
-  const handleLogout = async () => {
+  const saveBackupOnServer = async (currentPatients = patients, currentArchived = archivedPatients) => {
     try {
       await fetch('/api/backup/salvar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patients, archivedPatients })
+        body: JSON.stringify({ patients: currentPatients, archivedPatients: currentArchived })
       });
     } catch (e) {}
+  };
+
+  const handleLogout = async () => {
+    await saveBackupOnServer();
     localStorage.removeItem('uti_avc_auth_v1');
     setIsAuthenticated(false);
     setLoginUser('');
@@ -3214,102 +3218,33 @@ export default function InfusionApp() {
 
   // --- Backup e Sincronização com Servidor ---
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
-  const [serverSyncReady, setServerSyncReady] = useState(false);
 
-  // Carrega sempre os dados mais recentes do servidor ao abrir o link ou voltar para a aba;
-  // caso o servidor ainda esteja vazio e o navegador tenha dados locais, salva automaticamente no servidor!
+  // Carrega os últimos dados salvos no servidor ao iniciar o sistema / fazer login
   useEffect(() => {
-    const syncWithServer = () => {
-      fetch('/api/backup/carregar')
-        .then(res => res.json())
-        .then(resData => {
-          const serverPatients = resData?.data?.patients;
-          const serverArchived = resData?.data?.archivedPatients;
-          const serverHasPatients = Array.isArray(serverPatients) && serverPatients.some(
-            (p: Patient) => (p.name && p.name.trim() !== '') || (p.infusions && p.infusions.length > 0)
-          );
-          const serverHasArchived = Array.isArray(serverArchived) && serverArchived.length > 0;
+    fetch('/api/backup/carregar')
+      .then(res => res.json())
+      .then(resData => {
+        const serverPatients = resData?.data?.patients;
+        const serverArchived = resData?.data?.archivedPatients;
+        const serverHasPatients = Array.isArray(serverPatients) && serverPatients.some(
+          (p: Patient) => (p.name && p.name.trim() !== '') || (p.infusions && p.infusions.length > 0)
+        );
+        const serverHasArchived = Array.isArray(serverArchived) && serverArchived.length > 0;
 
-          if (resData?.success && (serverHasPatients || serverHasArchived)) {
-            if (serverHasPatients) {
-              setPatients(serverPatients.map((p: Patient) => ({
-                ...p,
-                dailyChecklists: ensureDailyChecklists(p)
-              })));
-            }
-            if (serverHasArchived) {
-              setArchivedPatients(serverArchived);
-            }
-          } else {
-            // Servidor vazio: se este navegador já tiver pacientes, envia automaticamente para o servidor
-            const localHasData =
-              patients.some(p => (p.name && p.name.trim() !== '') || (p.infusions && p.infusions.length > 0)) ||
-              archivedPatients.length > 0;
-            if (localHasData) {
-              fetch('/api/backup/salvar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ patients, archivedPatients })
-              }).catch(() => {});
-            }
+        if (resData?.success && (serverHasPatients || serverHasArchived)) {
+          if (serverHasPatients) {
+            setPatients(serverPatients.map((p: Patient) => ({
+              ...p,
+              dailyChecklists: ensureDailyChecklists(p)
+            })));
           }
-        })
-        .catch(() => {})
-        .finally(() => {
-          setServerSyncReady(true);
-        });
-    };
-
-    syncWithServer();
-    window.addEventListener('focus', syncWithServer);
-    return () => window.removeEventListener('focus', syncWithServer);
-  }, []);
-
-  // Salva automaticamente no servidor a cada modificação (debounce de 800ms)
-  useEffect(() => {
-    if (!serverSyncReady) return;
-    const hasAnyData =
-      patients.some(p => (p.name && p.name.trim() !== '') || (p.infusions && p.infusions.length > 0)) ||
-      archivedPatients.length > 0;
-    if (!hasAnyData) return;
-
-    const timer = setTimeout(() => {
-      fetch('/api/backup/salvar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patients, archivedPatients })
-      }).catch(() => {});
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, [patients, archivedPatients, serverSyncReady]);
-
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      try {
-        const payload = JSON.stringify({ patients, archivedPatients });
-        if (navigator.sendBeacon) {
-          const blob = new Blob([payload], { type: 'application/json' });
-          navigator.sendBeacon('/api/backup/salvar', blob);
-        } else {
-          fetch('/api/backup/salvar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: payload,
-            keepalive: true
-          }).catch(() => {});
+          if (serverHasArchived) {
+            setArchivedPatients(serverArchived);
+          }
         }
-      } catch (err) {}
-
-      e.preventDefault();
-      e.returnValue = '';
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [patients, archivedPatients]);
+      })
+      .catch(() => {});
+  }, [isAuthenticated]);
 
   const handleRestoreData = (restoredPatients: Patient[], restoredArchived?: ArchivedPatient[]) => {
     const normalizedPatients = restoredPatients.map(p => ({
@@ -3321,11 +3256,7 @@ export default function InfusionApp() {
     if (restoredArchived) {
       setArchivedPatients(restoredArchived);
     }
-    fetch('/api/backup/salvar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ patients: normalizedPatients, archivedPatients: finalArchived })
-    }).catch(() => {});
+    saveBackupOnServer(normalizedPatients, finalArchived);
   };
 
   // --- Importação de Evolução (.docx / Word) ---
@@ -4360,6 +4291,7 @@ export default function InfusionApp() {
   };
 
   const printAllChecklists = () => {
+    saveBackupOnServer();
     const htmlContent = getAllChecklistsHtml();
     if (!htmlContent) {
       alert('Nenhum leito ocupado para imprimir.');
