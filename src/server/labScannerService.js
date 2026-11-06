@@ -161,63 +161,87 @@ Retorne SOMENTE este JSON válido:
   "checklistCreatinina": ""
 }`;
 
-    const modelsToTry = ['gemini-3.8-flash', 'gemini-2.5-flash'];
-    let response = null;
-    let lastModelErr = null;
-
-    for (const modelName of modelsToTry) {
-      try {
-        const callPromise = ai.models.generateContent({
-          model: modelName,
-          contents: [
-            {
-              role: 'user',
-              parts: [...imageParts, { text: prompt }],
-            },
-          ],
-          config: {
-            responseMimeType: 'application/json',
-            temperature: 0,
-            thinkingConfig: {
-              thinkingBudget: 0,
-            },
+    const callGeminiModel = async (modelId) => {
+      const cleanModel = modelId.replace(/^models\//, '');
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const body = {
+        contents: [
+          {
+            role: 'user',
+            parts: [...imageParts, { text: prompt }],
           },
-        });
+        ],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.1,
+        },
+      };
 
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Tempo limite de leitura da IA excedido.')), 25000)
-        );
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
 
-        response = await Promise.race([callPromise, timeoutPromise]);
-        if (response) break;
+      const data = await res.json();
+      if (!res.ok) {
+        const errMsg = data?.error?.message || JSON.stringify(data);
+        const err = new Error(`[${cleanModel}] ${errMsg}`);
+        err.status = res.status;
+        throw err;
+      }
+
+      const textOut = data?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
+      if (!textOut) {
+        throw new Error(`Resposta vazia do modelo ${cleanModel}.`);
+      }
+      return textOut;
+    };
+
+    // Descobre automaticamente os modelos Flash disponíveis na conta caso necessário
+    let candidateModels = ['gemini-3.8-flash', 'gemini-3.0-flash', 'gemini-3-flash-preview', 'gemini-2.0-flash'];
+    try {
+      const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+      if (listRes.ok) {
+        const listData = await listRes.json();
+        const availableFlashModels = (listData.models || [])
+          .filter(
+            (m) =>
+              Array.isArray(m.supportedGenerationMethods) &&
+              m.supportedGenerationMethods.includes('generateContent') &&
+              m.name &&
+              m.name.includes('gemini') &&
+              m.name.includes('flash') &&
+              !m.name.includes('2.5') &&
+              !m.name.includes('1.5') &&
+              !m.name.includes('tts') &&
+              !m.name.includes('image') &&
+              !m.name.includes('audio')
+          )
+          .map((m) => m.name.replace(/^models\//, ''))
+          .reverse();
+
+        if (availableFlashModels.length > 0) {
+          candidateModels = [...new Set(['gemini-3.8-flash', ...availableFlashModels])];
+        }
+      }
+    } catch (e) {}
+
+    let rawText = '';
+    let errorsLog = [];
+
+    for (const modelName of candidateModels) {
+      try {
+        rawText = await callGeminiModel(modelName);
+        if (rawText) break;
       } catch (err) {
-        lastModelErr = err;
-        const msg = String(err?.message || '');
-        // Se o modelo não aceitar thinkingConfig, tenta sem thinkingConfig imediatamente
-        if (msg.includes('thinking') || msg.includes('Thinking') || msg.includes('INVALID_ARGUMENT')) {
-          try {
-            response = await ai.models.generateContent({
-              model: modelName,
-              contents: [{ role: 'user', parts: [...imageParts, { text: prompt }] }],
-              config: { responseMimeType: 'application/json', temperature: 0 },
-            });
-            if (response) break;
-          } catch (innerErr) {
-            lastModelErr = innerErr;
-          }
-        }
-        const suggestedMatch = msg.match(/models\/(gemini-[a-zA-Z0-9.-]+)/);
-        if (suggestedMatch && suggestedMatch[1] && !modelsToTry.includes(suggestedMatch[1])) {
-          modelsToTry.push(suggestedMatch[1]);
-        }
+        errorsLog.push(err.message);
       }
     }
 
-    if (!response) {
-      throw lastModelErr || new Error('Não foi possível obter resposta do modelo Gemini.');
+    if (!rawText) {
+      throw new Error(errorsLog[0] || 'Não foi possível obter resposta da API do Gemini.');
     }
-
-    const rawText = (response.text || '').trim();
     const cleanedJson = rawText.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
     const extracted = JSON.parse(cleanedJson);
     extracted.examDate = normalizeDateToDDMMAA(extracted.examDate);
