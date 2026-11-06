@@ -617,23 +617,69 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
 
   const [isLabScannerOpen, setIsLabScannerOpen] = React.useState(false);
 
+  const normalizeDateStr = (raw?: string): string => {
+    if (!raw) return '';
+    const m = String(raw).trim().match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+    if (!m) return '';
+    const dd = m[1].padStart(2, '0');
+    const mm = m[2].padStart(2, '0');
+    const yy = m[3].length === 4 ? m[3].slice(-2) : m[3].padStart(2, '0');
+    return `${dd}/${mm}/${yy}`;
+  };
+
   const handleApplyExtractedLabs = (extracted: ExtractedLabData) => {
-    const nextPatient: Patient = { ...patient };
-    const fields: (keyof ExtractedLabData & keyof Patient)[] = [
-      'checklistPh',
-      'checklistPao2Paco2',
-      'checklistHco3Sao2',
+    const normalizedExamDate = normalizeDateStr(extracted.examDate);
+    const updatedLists = [...dailyChecklists];
+
+    let targetIdx = activeIndex;
+
+    if (normalizedExamDate) {
+      // 1) Verifica se já existe uma coluna com a data do exame
+      const existingIdx = updatedLists.findIndex(
+        (col) => col && normalizeDateStr(col.checklistData) === normalizedExamDate
+      );
+      if (existingIdx !== -1) {
+        targetIdx = existingIdx;
+      } else {
+        // 2) Se ainda não houver coluna com essa data, seleciona a primeira coluna vazia
+        const firstEmptyIdx = updatedLists.findIndex(
+          (col) => !col || !col.checklistData || col.checklistData.trim() === ''
+        );
+        if (firstEmptyIdx !== -1) {
+          targetIdx = firstEmptyIdx;
+        }
+      }
+    }
+
+    let targetCol: DailyChecklist = { ...(updatedLists[targetIdx] || updatedLists[0]) };
+
+    // Se for uma coluna nova vazia (targetIdx > 0), herda os cuidados contínuos da coluna anterior preenchida
+    if (targetIdx > 0 && isColumnEmpty(targetCol)) {
+      const prevList =
+        [...updatedLists.slice(0, targetIdx)]
+          .reverse()
+          .find((item) => Boolean(item.checklistData && item.checklistData.trim() !== '')) ||
+        updatedLists[targetIdx - 1];
+      if (prevList) {
+        targetCol = {
+          ...targetCol,
+          ...getAutoFilledColumn(prevList),
+        };
+      }
+    }
+
+    if (normalizedExamDate) {
+      targetCol.checklistData = normalizedExamDate;
+    }
+
+    const fields: (keyof ExtractedLabData & keyof DailyChecklist)[] = [
       'checklistHb',
       'checklistHt',
       'checklistPlaquetas',
       'checklistLeucograma',
       'checklistBastoes',
-      'checklistInr',
       'checklistSodio',
       'checklistPotassio',
-      'checklistMagnesio',
-      'checklistFosforo',
-      'checklistTroponina',
       'checklistUreia',
       'checklistCreatinina',
     ];
@@ -641,24 +687,21 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
     for (const f of fields) {
       const val = extracted[f];
       if (val && String(val).trim() !== '') {
-        (nextPatient as any)[f] = String(val).trim();
+        (targetCol as any)[f] = String(val).trim();
       }
     }
 
-    if (extracted.checklistBioquimicaOutros && String(extracted.checklistBioquimicaOutros).trim() !== '') {
-      const newOutros = String(extracted.checklistBioquimicaOutros).trim();
-      if (nextPatient.checklistBioquimicaOutros && !nextPatient.checklistBioquimicaOutros.includes(newOutros)) {
-        nextPatient.checklistBioquimicaOutros = `${nextPatient.checklistBioquimicaOutros} | ${newOutros}`;
-      } else {
-        nextPatient.checklistBioquimicaOutros = newOutros;
-      }
-    }
+    updatedLists[targetIdx] = targetCol;
 
-    if (!nextPatient.checklistData && extracted.examDate && String(extracted.examDate).trim() !== '') {
-      nextPatient.checklistData = handleDateMask(String(extracted.examDate).trim());
-    }
+    updatePatientRaw({
+      ...patientRaw,
+      dailyChecklists: updatedLists,
+      ...updatedLists[0],
+    });
 
-    updatePatient(nextPatient);
+    if (targetIdx !== activeIndex) {
+      setActiveIndex(targetIdx);
+    }
   };
 
   const handleRefreshSedacao = () => {

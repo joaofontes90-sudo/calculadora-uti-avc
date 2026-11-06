@@ -2,25 +2,17 @@ import React, { useEffect, useState, useRef } from 'react';
 import { QrCode, Smartphone, Upload, CheckCircle2, AlertTriangle, Loader2, X, Key, Sparkles, RefreshCw } from 'lucide-react';
 
 export interface ExtractedLabData {
-  patientNameOnSheet?: string;
   examDate?: string;
-  checklistPh?: string;
-  checklistPao2Paco2?: string;
-  checklistHco3Sao2?: string;
+  resolvedColumnIndex?: number;
   checklistHb?: string;
   checklistHt?: string;
   checklistPlaquetas?: string;
   checklistLeucograma?: string;
   checklistBastoes?: string;
-  checklistInr?: string;
   checklistSodio?: string;
   checklistPotassio?: string;
-  checklistMagnesio?: string;
-  checklistFosforo?: string;
-  checklistTroponina?: string;
   checklistUreia?: string;
   checklistCreatinina?: string;
-  checklistBioquimicaOutros?: string;
 }
 
 interface LabScannerModalProps {
@@ -44,7 +36,6 @@ export const LabScannerModal: React.FC<LabScannerModalProps> = ({
 }) => {
   const [sessionId, setSessionId] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState('');
-  const [mobileUrl, setMobileUrl] = useState('');
   const [hasApiKey, setHasApiKey] = useState(true);
   const [showKeyConfig, setShowKeyConfig] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState('');
@@ -80,7 +71,6 @@ export const LabScannerModal: React.FC<LabScannerModalProps> = ({
       }
       setSessionId(data.sessionId);
       setQrDataUrl(data.qrDataUrl);
-      setMobileUrl(data.mobileUrl);
       setHasApiKey(Boolean(data.hasApiKey));
       if (!data.hasApiKey) {
         setShowKeyConfig(true);
@@ -124,7 +114,7 @@ export const LabScannerModal: React.FC<LabScannerModalProps> = ({
           setErrorMsg(data.error || 'Erro ao processar foto.');
         }
       } catch (e) {}
-    }, 1800);
+    }, 1500);
 
     return () => clearInterval(timer);
   }, [isOpen, sessionId, status]);
@@ -160,7 +150,7 @@ export const LabScannerModal: React.FC<LabScannerModalProps> = ({
       reader.onload = (ev) => {
         const img = new Image();
         img.onload = () => {
-          const maxDim = 1600;
+          const maxDim = 1200;
           let w = img.width;
           let h = img.height;
           if (w > maxDim || h > maxDim) {
@@ -177,7 +167,7 @@ export const LabScannerModal: React.FC<LabScannerModalProps> = ({
           canvas.height = h;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, w, h);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.80);
           resolve({ mimeType: 'image/jpeg', base64Data: dataUrl });
         };
         img.onerror = reject;
@@ -233,25 +223,16 @@ export const LabScannerModal: React.FC<LabScannerModalProps> = ({
 
   const extractedEntries = extracted
     ? [
-        ['Nome na Folha', extracted.patientNameOnSheet],
         ['Data do Exame', extracted.examDate],
         ['Hb', extracted.checklistHb],
         ['Ht', extracted.checklistHt],
         ['Plaquetas', extracted.checklistPlaquetas],
-        ['Leucócitos', extracted.checklistLeucograma],
+        ['Leucograma', extracted.checklistLeucograma],
         ['Bastões', extracted.checklistBastoes],
-        ['INR', extracted.checklistInr],
         ['Sódio (Na)', extracted.checklistSodio],
         ['Potássio (K)', extracted.checklistPotassio],
-        ['Magnésio (Mg)', extracted.checklistMagnesio],
-        ['Fósforo (P)', extracted.checklistFosforo],
-        ['Troponina', extracted.checklistTroponina],
         ['Ureia', extracted.checklistUreia],
         ['Creatinina', extracted.checklistCreatinina],
-        ['pH', extracted.checklistPh],
-        ['PaO2 / PaCO2', extracted.checklistPao2Paco2],
-        ['HCO3 / SaO2', extracted.checklistHco3Sao2],
-        ['Outros', extracted.checklistBioquimicaOutros],
       ].filter(([, val]) => val && String(val).trim() !== '')
     : [];
 
@@ -269,7 +250,7 @@ export const LabScannerModal: React.FC<LabScannerModalProps> = ({
                 Leitor IA de Exames (QR Code / Foto)
               </h3>
               <p className="text-[11px] text-blue-100 font-bold">
-                Leito {bedId} ({patientName || 'Sem nome'}) • Checklist Dia {dayIndex + 1}
+                Leito {bedId} ({patientName || 'Sem nome'})
               </p>
             </div>
           </div>
@@ -294,7 +275,7 @@ export const LabScannerModal: React.FC<LabScannerModalProps> = ({
 
         {/* Body */}
         <div className="p-6 overflow-y-auto space-y-4 custom-scrollbar">
-          {/* Configuração da Chave Gemini (se não houver ou se clicou na chave) */}
+          {/* Configuração da Chave Gemini */}
           {(!hasApiKey || showKeyConfig) && (
             <form onSubmit={handleSaveApiKey} className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-2.5">
               <div className="flex items-center justify-between">
@@ -352,9 +333,9 @@ export const LabScannerModal: React.FC<LabScannerModalProps> = ({
                 )}
 
                 <p className="text-[11.5px] text-slate-600 max-w-sm leading-relaxed">
-                  1. Abra a câmera do celular e escaneie o código acima.<br />
-                  2. Tire foto da(s) folha(s) A4 de exames laboratoriais.<br />
-                  3. Os resultados preencherão o <strong>Dia {dayIndex + 1}</strong> automaticamente!
+                  1. Escaneie o QR Code com a câmera do celular.<br />
+                  2. Fotografe a folha A4 com os exames.<br />
+                  3. Serão preenchidos automaticamente <strong>Hb, Ht, Plaquetas, Leucograma, Bastões, Na, K, Ureia e Creatinina</strong> na coluna da data do exame!
                 </p>
 
                 <div className="flex items-center gap-2 text-[11px] font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-200">
@@ -395,7 +376,7 @@ export const LabScannerModal: React.FC<LabScannerModalProps> = ({
                   Lendo Exames com Inteligência Artificial...
                 </h4>
                 <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-                  Extraindo Hemograma, Bioquímica, Coagulograma e Gasometria da foto enviada...
+                  Extraindo Hemograma (Hb, Ht, Plaquetas, Leucograma, Bastões), Na, K, Ureia, Creatinina e Data do Exame...
                 </p>
               </div>
               <Loader2 className="w-6 h-6 text-blue-600 animate-spin mx-auto" />
@@ -411,7 +392,7 @@ export const LabScannerModal: React.FC<LabScannerModalProps> = ({
                     Exames Preenchidos Automaticamente!
                   </h4>
                   <p className="text-[11px] text-emerald-800 mt-0.5">
-                    Os valores abaixo já foram inseridos nos campos de <strong>Laboratório & Exames (Dia {dayIndex + 1})</strong>.
+                    Os valores abaixo foram preenchidos na coluna{extracted.examDate ? ` da data ${extracted.examDate}` : ''} (Dia {(extracted.resolvedColumnIndex ?? dayIndex) + 1}).
                   </p>
                 </div>
               </div>
@@ -421,9 +402,7 @@ export const LabScannerModal: React.FC<LabScannerModalProps> = ({
                   {extractedEntries.map(([label, val]) => (
                     <div
                       key={label}
-                      className={`p-2.5 bg-slate-50 border border-slate-200 rounded-xl ${
-                        label === 'Outros' || label === 'Nome na Folha' ? 'col-span-2 sm:col-span-3' : ''
-                      }`}
+                      className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
                     >
                       <span className="text-[9.5px] font-black uppercase text-slate-400 block">{label}</span>
                       <span className="text-xs font-black text-slate-800">{val}</span>
