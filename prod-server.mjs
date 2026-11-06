@@ -1,9 +1,11 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { searchAndFetchReports } from './src/server/telemedicinaService.js';
 import { saveBackupData, listBackups, getBackupDirectory, loadBackupFile } from './src/server/backupService.js';
+import { generateChecklistPdfOnServer, getPdfsDirectory } from './src/server/pdfService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,6 +76,38 @@ app.get('/api/backup/carregar', (req, res) => {
     return res.status(200).json(result);
   } catch (err) {
     return res.status(200).json({ success: false, error: err?.message });
+  }
+});
+
+// Endpoint: Gerar PDF dos Checklists no Servidor e retornar link público
+app.post('/api/pdf/gerar-checklist', async (req, res) => {
+  try {
+    const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+    const { htmlContent, fileNamePrefix } = body;
+    const result = await generateChecklistPdfOnServer(htmlContent, fileNamePrefix);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error('[PDF API Error]', err);
+    return res.status(500).json({
+      success: false,
+      error: err?.message || 'Erro ao gerar PDF no servidor.',
+    });
+  }
+});
+
+// Servir os PDFs gerados publicamente em /pdfs/:fileName
+app.get('/pdfs/:fileName', (req, res) => {
+  try {
+    const safeName = path.basename(String(req.params.fileName || ''));
+    const filePath = path.join(getPdfsDirectory(), safeName);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).send('Arquivo PDF não encontrado.');
+    }
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${safeName}"`);
+    return res.sendFile(filePath);
+  } catch (err) {
+    return res.status(500).send('Erro ao abrir PDF.');
   }
 });
 

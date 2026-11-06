@@ -14,7 +14,9 @@ import {
   HardDrive, 
   ShieldCheck, 
   FileText,
-  RotateCcw
+  RotateCcw,
+  Lock,
+  Key
 } from 'lucide-react';
 
 interface BackupModalProps {
@@ -47,6 +49,9 @@ export const BackupModal: React.FC<BackupModalProps> = ({
   const [isExitScreenActive, setIsExitScreenActive] = useState(false);
   const [pastedJson, setPastedJson] = useState('');
   const [showPasteBox, setShowPasteBox] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const fetchBackups = async () => {
@@ -67,6 +72,9 @@ export const BackupModal: React.FC<BackupModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      setIsUnlocked(false);
+      setPasswordInput('');
+      setPasswordError('');
       setIsExitScreenActive(false);
       setStatusMessage(null);
       fetchBackups();
@@ -74,6 +82,16 @@ export const BackupModal: React.FC<BackupModalProps> = ({
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput.trim() === 'k5l6je') {
+      setIsUnlocked(true);
+      setPasswordError('');
+    } else {
+      setPasswordError('Senha incorreta. Tente novamente.');
+    }
+  };
 
   // Função para salvar o backup localmente e disparar download no navegador
   const handleSaveBackup = async (isExiting = false) => {
@@ -266,23 +284,82 @@ export const BackupModal: React.FC<BackupModalProps> = ({
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar text-left">
-          
-          {/* Status Message */}
-          {statusMessage && (
-            <div className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 border ${
-              statusMessage.type === 'success' 
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
-                : statusMessage.type === 'error'
-                ? 'bg-rose-50 border-rose-200 text-rose-800'
-                : 'bg-blue-50 border-blue-200 text-blue-800'
-            }`}>
-              {statusMessage.type === 'success' ? <Check size={16} /> : <AlertCircle size={16} />}
-              <span>{statusMessage.text}</span>
-            </div>
-          )}
+          {!isUnlocked ? (
+            <form onSubmit={handlePasswordSubmit} className="space-y-4 py-2">
+              <div className="p-4 bg-blue-50/70 border border-blue-200/80 rounded-2xl flex items-start gap-3">
+                <div className="p-2.5 bg-blue-600 text-white rounded-xl shrink-0 mt-0.5">
+                  <Lock size={20} />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-blue-950">
+                    Acesso Restrito a Backup e Importação
+                  </h3>
+                  <p className="text-xs text-blue-800/90 leading-relaxed">
+                    Informe a senha de administrador para acessar backups, importar dados ou restaurar arquivos.
+                  </p>
+                </div>
+              </div>
 
-          {/* Se a tela de saída estiver ativa */}
-          {isExitScreenActive ? (
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-1.5">
+                  <Key size={13} className="text-blue-600" />
+                  Senha de Acesso *
+                </label>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => {
+                    setPasswordInput(e.target.value);
+                    if (passwordError) setPasswordError('');
+                  }}
+                  placeholder="Digite a senha..."
+                  autoFocus
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+                {passwordError && (
+                  <p className="text-[11px] font-bold text-rose-600 mt-1.5 flex items-center gap-1">
+                    <AlertCircle size={12} />
+                    <span>{passwordError}</span>
+                  </p>
+                )}
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs transition-all cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-blue-600/20 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ShieldCheck size={14} />
+                  <span>Acessar Backup / Importar</span>
+                </button>
+              </div>
+            </form>
+          ) : (
+            <>
+              {/* Status Message */}
+              {statusMessage && (
+                <div className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 border ${
+                  statusMessage.type === 'success' 
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                    : statusMessage.type === 'error'
+                    ? 'bg-rose-50 border-rose-200 text-rose-800'
+                    : 'bg-blue-50 border-blue-200 text-blue-800'
+                }`}>
+                  {statusMessage.type === 'success' ? <Check size={16} /> : <AlertCircle size={16} />}
+                  <span>{statusMessage.text}</span>
+                </div>
+              )}
+
+              {/* Se a tela de saída estiver ativa */}
+              {isExitScreenActive ? (
             <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-200 text-center space-y-4">
               <div className="w-12 h-12 mx-auto bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
                 <Check size={24} />
@@ -498,18 +575,22 @@ export const BackupModal: React.FC<BackupModalProps> = ({
               </div>
             </>
           )}
+            </>
+          )}
 
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
-          >
-            Fechar
-          </button>
-        </div>
+        {isUnlocked && (
+          <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            >
+              Fechar
+            </button>
+          </div>
+        )}
 
       </div>
     </div>

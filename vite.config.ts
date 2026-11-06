@@ -1,6 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import fs from 'fs';
 import {defineConfig, loadEnv} from 'vite';
 
 function telemedicinaVitePlugin(env: Record<string, string> = {}) {
@@ -103,6 +104,48 @@ function backupVitePlugin() {
           res.statusCode = 500;
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ success: false, error: err?.message }));
+        }
+      });
+
+      server.middlewares.use('/api/pdf/gerar-checklist', async (req: any, res: any, next: any) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', (chunk: any) => { body += chunk; });
+        req.on('end', async () => {
+          try {
+            const { htmlContent, fileNamePrefix } = JSON.parse(body || '{}');
+            const { generateChecklistPdfOnServer } = await import('./src/server/pdfService.js');
+            const result = await generateChecklistPdfOnServer(htmlContent, fileNamePrefix);
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(result));
+          } catch (err: any) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: false, error: err?.message || 'Erro ao gerar PDF.' }));
+          }
+        });
+      });
+
+      server.middlewares.use('/pdfs/', async (req: any, res: any, next: any) => {
+        if (req.method !== 'GET') return next();
+        try {
+          const { getPdfsDirectory } = await import('./src/server/pdfService.js');
+          const rawName = decodeURIComponent((req.url || '').split('?')[0].replace(/^\/+/, ''));
+          const safeName = path.basename(rawName);
+          const filePath = path.join(getPdfsDirectory(), safeName);
+          if (!fs.existsSync(filePath)) {
+            res.statusCode = 404;
+            res.end('Arquivo PDF não encontrado.');
+            return;
+          }
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `inline; filename="${safeName}"`);
+          fs.createReadStream(filePath).pipe(res);
+        } catch (err: any) {
+          res.statusCode = 500;
+          res.end('Erro ao abrir PDF.');
         }
       });
     }
