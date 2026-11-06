@@ -6,14 +6,6 @@ import { fileURLToPath } from 'url';
 import { searchAndFetchReports } from './src/server/telemedicinaService.js';
 import { saveBackupData, listBackups, getBackupDirectory, loadBackupFile } from './src/server/backupService.js';
 import { generateChecklistPdfOnServer, getPdfsDirectory } from './src/server/pdfService.js';
-import {
-  createLabSession,
-  getLabSession,
-  processLabImagesWithAI,
-  renderMobileLabPage,
-  saveGeminiApiKey,
-  getGeminiApiKey,
-} from './src/server/labScannerService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -117,74 +109,6 @@ app.get('/pdfs/:fileName', (req, res) => {
   } catch (err) {
     return res.status(500).send('Erro ao abrir PDF.');
   }
-});
-
-// Endpoints: Leitor de Exames Laboratoriais via QR Code + Celular + IA
-app.post('/api/lab-scanner/criar-sessao', async (req, res) => {
-  try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const origin = body.origin || `${req.protocol}://${req.get('host')}`;
-    const result = await createLabSession({
-      origin,
-      bedId: body.bedId,
-      patientName: body.patientName,
-      dayIndex: body.dayIndex,
-      checklistDate: body.checklistDate,
-    });
-    return res.status(200).json(result);
-  } catch (err) {
-    return res.status(500).json({ success: false, error: err?.message });
-  }
-});
-
-app.get('/api/lab-scanner/status', (req, res) => {
-  const sessionId = String(req.query.session || '');
-  const session = getLabSession(sessionId);
-  if (!session) {
-    return res.status(404).json({ success: false, error: 'Sessão não encontrada.' });
-  }
-  return res.status(200).json({
-    success: true,
-    status: session.status,
-    extractedData: session.extractedData,
-    error: session.error,
-    hasApiKey: Boolean(getGeminiApiKey()),
-  });
-});
-
-app.post('/api/lab-scanner/salvar-api-key', (req, res) => {
-  try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const result = saveGeminiApiKey(body.apiKey);
-    return res.status(200).json(result);
-  } catch (err) {
-    return res.status(500).json({ success: false, error: err?.message });
-  }
-});
-
-app.post('/api/lab-scanner/processar', async (req, res) => {
-  try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const result = await processLabImagesWithAI({
-      sessionId: body.sessionId,
-      images: body.images,
-      bedId: body.bedId,
-      dayIndex: body.dayIndex,
-    });
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error('[LabScanner Error]', err);
-    return res.status(500).json({
-      success: false,
-      error: err?.message || 'Erro ao analisar foto do exame.',
-    });
-  }
-});
-
-app.get('/mobile-lab', (req, res) => {
-  const sessionId = String(req.query.session || '');
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  return res.status(200).send(renderMobileLabPage(sessionId));
 });
 
 // Servir arquivos estáticos compilados pelo Vite (pasta dist)

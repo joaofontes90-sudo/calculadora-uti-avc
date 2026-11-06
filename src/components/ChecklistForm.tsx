@@ -11,11 +11,9 @@ import {
   ChevronLeft,
   ChevronRight,
   RefreshCw,
-  Pill,
-  QrCode
+  Pill
 } from 'lucide-react';
 import { Patient, DailyChecklist, MEDS, calculateDose, getEffectiveUnit, formatDoseValue, ensureDailyChecklists } from '../App';
-import { LabScannerModal, ExtractedLabData } from './LabScannerModal';
 
 export function cleanAbxName(rawName: string): string {
   if (!rawName) return '';
@@ -613,95 +611,6 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
       // update root level with first element for safety
       ...updatedLists[0]
     });
-  };
-
-  const [isLabScannerOpen, setIsLabScannerOpen] = React.useState(false);
-
-  const normalizeDateStr = (raw?: string): string => {
-    if (!raw) return '';
-    const m = String(raw).trim().match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-    if (!m) return '';
-    const dd = m[1].padStart(2, '0');
-    const mm = m[2].padStart(2, '0');
-    const yy = m[3].length === 4 ? m[3].slice(-2) : m[3].padStart(2, '0');
-    return `${dd}/${mm}/${yy}`;
-  };
-
-  const handleApplyExtractedLabs = (extracted: ExtractedLabData) => {
-    const normalizedExamDate = normalizeDateStr(extracted.examDate);
-    const updatedLists = [...dailyChecklists];
-
-    let targetIdx = activeIndex;
-
-    if (normalizedExamDate) {
-      // 1) Verifica se já existe uma coluna com a data do exame
-      const existingIdx = updatedLists.findIndex(
-        (col) => col && normalizeDateStr(col.checklistData) === normalizedExamDate
-      );
-      if (existingIdx !== -1) {
-        targetIdx = existingIdx;
-      } else {
-        // 2) Se ainda não houver coluna com essa data, seleciona a primeira coluna vazia
-        const firstEmptyIdx = updatedLists.findIndex(
-          (col) => !col || !col.checklistData || col.checklistData.trim() === ''
-        );
-        if (firstEmptyIdx !== -1) {
-          targetIdx = firstEmptyIdx;
-        }
-      }
-    }
-
-    let targetCol: DailyChecklist = { ...(updatedLists[targetIdx] || updatedLists[0]) };
-
-    // Se for uma coluna nova vazia (targetIdx > 0), herda os cuidados contínuos da coluna anterior preenchida
-    if (targetIdx > 0 && isColumnEmpty(targetCol)) {
-      const prevList =
-        [...updatedLists.slice(0, targetIdx)]
-          .reverse()
-          .find((item) => Boolean(item.checklistData && item.checklistData.trim() !== '')) ||
-        updatedLists[targetIdx - 1];
-      if (prevList) {
-        targetCol = {
-          ...targetCol,
-          ...getAutoFilledColumn(prevList),
-        };
-      }
-    }
-
-    if (normalizedExamDate) {
-      targetCol.checklistData = normalizedExamDate;
-    }
-
-    const fields: (keyof ExtractedLabData & keyof DailyChecklist)[] = [
-      'checklistHb',
-      'checklistHt',
-      'checklistPlaquetas',
-      'checklistLeucograma',
-      'checklistBastoes',
-      'checklistSodio',
-      'checklistPotassio',
-      'checklistUreia',
-      'checklistCreatinina',
-    ];
-
-    for (const f of fields) {
-      const val = extracted[f];
-      if (val && String(val).trim() !== '') {
-        (targetCol as any)[f] = String(val).trim();
-      }
-    }
-
-    updatedLists[targetIdx] = targetCol;
-
-    updatePatientRaw({
-      ...patientRaw,
-      dailyChecklists: updatedLists,
-      ...updatedLists[0],
-    });
-
-    if (targetIdx !== activeIndex) {
-      setActiveIndex(targetIdx);
-    }
   };
 
   const handleRefreshSedacao = () => {
@@ -1701,20 +1610,9 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
       <div className="space-y-3">
         {/* CARD 1: EXAMES, LABS E MONITORIZAÇÃO */}
         <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
-          <div className="flex items-center justify-between gap-1.5 pb-1.5 border-b border-slate-100">
-            <div className="flex items-center gap-1.5">
-              <Droplets size={14} className="text-blue-600" />
-              <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Laboratório & Exames</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsLabScannerOpen(true)}
-              className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[9.5px] font-black uppercase shadow-xs transition-all flex items-center gap-1 active:scale-95 cursor-pointer hover:-translate-y-0.5"
-              title="Gerar QR Code para tirar foto dos exames pelo celular e preencher automaticamente com IA"
-            >
-              <QrCode size={11} />
-              <span>Ler Exames (QR / Foto)</span>
-            </button>
+          <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
+            <Droplets size={14} className="text-blue-600" />
+            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Laboratório & Exames</span>
           </div>
 
           {/* GASOMETRIA */}
@@ -1917,16 +1815,6 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
         </div>
       </div>
     </div>
-
-    <LabScannerModal
-      isOpen={isLabScannerOpen}
-      onClose={() => setIsLabScannerOpen(false)}
-      bedId={patientRaw.id}
-      patientName={patientRaw.name || `Leito ${patientRaw.id}`}
-      dayIndex={activeIndex}
-      checklistDate={activeChecklist.checklistData}
-      onApplyExtractedLabs={handleApplyExtractedLabs}
-    />
   </div>
 );
 };
