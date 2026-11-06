@@ -157,19 +157,39 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido (sem blocos markdown) seguindo exa
   "checklistBioquimicaOutros": ""
 }`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [
-        {
-          role: 'user',
-          parts: [...imageParts, { text: prompt }],
-        },
-      ],
-      config: {
-        responseMimeType: 'application/json',
-        temperature: 0.1,
-      },
-    });
+    const modelsToTry = ['gemini-3.8-flash', 'gemini-3-flash-preview', 'gemini-2.5-flash'];
+    let response = null;
+    let lastModelErr = null;
+
+    for (const modelName of modelsToTry) {
+      try {
+        response = await ai.models.generateContent({
+          model: modelName,
+          contents: [
+            {
+              role: 'user',
+              parts: [...imageParts, { text: prompt }],
+            },
+          ],
+          config: {
+            responseMimeType: 'application/json',
+            temperature: 0.1,
+          },
+        });
+        if (response) break;
+      } catch (err) {
+        lastModelErr = err;
+        const msg = String(err?.message || '');
+        const suggestedMatch = msg.match(/models\/(gemini-[a-zA-Z0-9.-]+)/);
+        if (suggestedMatch && suggestedMatch[1] && !modelsToTry.includes(suggestedMatch[1])) {
+          modelsToTry.push(suggestedMatch[1]);
+        }
+      }
+    }
+
+    if (!response) {
+      throw lastModelErr || new Error('Não foi possível obter resposta do modelo Gemini.');
+    }
 
     const rawText = (response.text || '').trim();
     const cleanedJson = rawText.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
