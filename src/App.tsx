@@ -670,23 +670,23 @@ export const renderGasometriaHistoryTable = (p: Patient) => {
 
 export const renderLaboratorioHistoryTable = (p: Patient) => {
   const allDaily = ensureDailyChecklists(p);
-  const filledLists = allDaily.filter(d => 
-    Boolean(
-      (d.checklistHb && d.checklistHb.trim()) || 
-      (d.checklistHt && d.checklistHt.trim()) || 
-      (d.checklistPlaquetas && d.checklistPlaquetas.trim()) || 
-      (d.checklistLeucograma && d.checklistLeucograma.trim()) || 
-      (d.checklistBastoes && d.checklistBastoes.trim()) || 
-      (d.checklistInr && d.checklistInr.trim()) || 
-      (d.checklistSodio && d.checklistSodio.trim()) || 
-      (d.checklistPotassio && d.checklistPotassio.trim()) || 
-      (d.checklistMagnesio && d.checklistMagnesio.trim()) || 
-      (d.checklistFosforo && d.checklistFosforo.trim()) || 
-      (d.checklistUreia && d.checklistUreia.trim()) || 
-      (d.checklistCreatinina && d.checklistCreatinina.trim()) || 
-      (d.checklistTroponina && d.checklistTroponina.trim()) || 
-      (d.checklistBioquimicaOutros && d.checklistBioquimicaOutros.trim())
-    )
+  const isNumericLabValue = (val?: string) => {
+    if (!val) return false;
+    const trimmed = val.trim();
+    if (!trimmed) return false;
+    if (/solicitad|pendente|aguardand|amanh|coletad/i.test(trimmed)) return false;
+    return /\d/.test(trimmed);
+  };
+
+  // Exibe apenas linhas onde pelo menos um de: Hb/Ht, Plaq, Na, K ou Ur/Cr possua valor numérico válido
+  const filledLists = allDaily.filter(d =>
+    isNumericLabValue(d.checklistHb) ||
+    isNumericLabValue(d.checklistHt) ||
+    isNumericLabValue(d.checklistPlaquetas) ||
+    isNumericLabValue(d.checklistSodio) ||
+    isNumericLabValue(d.checklistPotassio) ||
+    isNumericLabValue(d.checklistUreia) ||
+    isNumericLabValue(d.checklistCreatinina)
   );
 
   const listsToRender = filledLists.length > 0 ? filledLists : [{} as DailyChecklist];
