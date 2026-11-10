@@ -3198,6 +3198,9 @@ export default function InfusionApp() {
     }
   };
 
+  const [isExitConfirmModalOpen, setIsExitConfirmModalOpen] = useState(false);
+  const [isSavingExit, setIsSavingExit] = useState(false);
+
   const saveBackupOnServer = async (currentPatients = patients, currentArchived = archivedPatients) => {
     try {
       await fetch('/api/backup/salvar', {
@@ -3208,13 +3211,40 @@ export default function InfusionApp() {
     } catch (e) {}
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setIsExitConfirmModalOpen(true);
+  };
+
+  const handleExitAndSave = async () => {
+    setIsSavingExit(true);
     await saveBackupOnServer();
+    setIsSavingExit(false);
+    setIsExitConfirmModalOpen(false);
     localStorage.removeItem('uti_avc_auth_v1');
     setIsAuthenticated(false);
     setLoginUser('');
     setLoginPass('');
   };
+
+  const handleExitWithoutSaving = () => {
+    setIsExitConfirmModalOpen(false);
+    localStorage.removeItem('uti_avc_auth_v1');
+    setIsAuthenticated(false);
+    setLoginUser('');
+    setLoginPass('');
+  };
+
+  // Intercepta tentativa de fechar a aba/janela do navegador e abre o modal "Sair e Salvar / Sair sem Salvar"
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      setIsExitConfirmModalOpen(true);
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isAuthenticated]);
 
   // --- Backup e Sincronização com Servidor ---
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
@@ -7932,6 +7962,91 @@ export default function InfusionApp() {
         archivedPatients={archivedPatients}
         onRestoreData={handleRestoreData}
       />
+
+      {/* MODAL DE CONFIRMAÇÃO AO SAIR / FECHAR A PÁGINA */}
+      <AnimatePresence>
+        {isExitConfirmModalOpen && (
+          <div key="exit-confirm-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isSavingExit && setIsExitConfirmModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-10 text-left"
+            >
+              <div className="bg-emerald-600 px-6 py-4 text-white flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/15 rounded-xl">
+                    <Save size={22} />
+                  </div>
+                  <div>
+                    <h2 className="font-black text-base uppercase tracking-wider leading-tight">Deseja Sair do Programa?</h2>
+                    <p className="text-[11px] opacity-90 font-bold uppercase tracking-wider mt-0.5">
+                      Salve os dados antes de encerrar
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={isSavingExit}
+                  onClick={() => setIsExitConfirmModalOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-white/15 transition-colors"
+                >
+                  <Plus className="rotate-45" size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <p className="text-xs text-slate-600 font-semibold leading-relaxed">
+                  Para garantir que todas as alterações preenchidas nos leitos e checklists fiquem disponíveis em qualquer computador, clique em <strong>SAIR E SALVAR</strong> abaixo:
+                </p>
+
+                {/* Botão principal em destaque máximo: SAIR E SALVAR */}
+                <button
+                  type="button"
+                  disabled={isSavingExit}
+                  onClick={handleExitAndSave}
+                  className="w-full py-4 px-5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white rounded-xl font-black text-sm uppercase tracking-wider shadow-lg shadow-emerald-200 ring-2 ring-emerald-500 ring-offset-2 transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
+                >
+                  <Save size={18} />
+                  <span>{isSavingExit ? 'Salvando dados...' : 'SAIR E SALVAR'}</span>
+                  <span className="ml-1 px-2 py-0.5 bg-white/20 rounded-md text-[9px] font-black tracking-widest">
+                    RECOMENDADO
+                  </span>
+                </button>
+
+                {/* Opções secundárias: Sair sem salvar e Cancelar */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    disabled={isSavingExit}
+                    onClick={() => setIsExitConfirmModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Continuar no Programa
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isSavingExit}
+                    onClick={handleExitWithoutSaving}
+                    className="px-3 py-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 font-bold text-[11px] uppercase tracking-wider transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <LogOut size={13} />
+                    <span>Sair sem salvar</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
 
       <style>{`
