@@ -522,25 +522,24 @@ export const getLastFilledPageLists = (lists: DailyChecklist[]): { pageLists: Da
     return { pageLists: [], startColumn: 1 };
   }
 
+  const hasValidDate = (item?: DailyChecklist) => Boolean(item && item.checklistData && item.checklistData.trim() !== '');
+
   const totalPages = Math.max(1, Math.ceil(lists.length / 6));
   let lastFilledPageIndex = 0;
 
   for (let pIndex = 0; pIndex < totalPages; pIndex++) {
     const pageSlice = lists.slice(pIndex * 6, pIndex * 6 + 6);
-    const hasData = pageSlice.some(item => {
-      if (!item) return false;
-      return Object.values(item).some(v => {
-        if (Array.isArray(v)) return v.length > 0;
-        return v !== undefined && v !== null && String(v).trim() !== '';
-      });
-    });
+    const hasData = pageSlice.some(item => hasValidDate(item));
     if (hasData) {
       lastFilledPageIndex = pIndex;
     }
   }
 
   const startIndex = lastFilledPageIndex * 6;
-  const pageLists = lists.slice(startIndex, startIndex + 6);
+  // Não imprime dados de colunas onde "Data do Checklist" não esteja preenchida
+  const pageLists = lists
+    .slice(startIndex, startIndex + 6)
+    .map(item => (hasValidDate(item) ? item : ({} as DailyChecklist)));
 
   while (pageLists.length < 6) {
     pageLists.push({});
@@ -621,6 +620,7 @@ export const getFirstAndLastCranialTcs = (p: Patient) => {
 export const renderGasometriaHistoryTable = (p: Patient) => {
   const allDaily = ensureDailyChecklists(p);
   const filledLists = allDaily.filter(d => 
+    Boolean(d.checklistData && d.checklistData.trim()) &&
     Boolean(
       (d.checklistPh && d.checklistPh.trim()) || 
       (d.checklistPao2Paco2 && d.checklistPao2Paco2.trim()) || 
@@ -678,15 +678,18 @@ export const renderLaboratorioHistoryTable = (p: Patient) => {
     return /\d/.test(trimmed);
   };
 
-  // Exibe apenas linhas onde pelo menos um de: Hb/Ht, Plaq, Na, K ou Ur/Cr possua valor numérico válido
+  // Exibe apenas linhas com "Data do Checklist" preenchida e onde pelo menos um de: Hb/Ht, Plaq, Na, K ou Ur/Cr possua valor numérico válido
   const filledLists = allDaily.filter(d =>
-    isNumericLabValue(d.checklistHb) ||
-    isNumericLabValue(d.checklistHt) ||
-    isNumericLabValue(d.checklistPlaquetas) ||
-    isNumericLabValue(d.checklistSodio) ||
-    isNumericLabValue(d.checklistPotassio) ||
-    isNumericLabValue(d.checklistUreia) ||
-    isNumericLabValue(d.checklistCreatinina)
+    Boolean(d.checklistData && d.checklistData.trim()) &&
+    (
+      isNumericLabValue(d.checklistHb) ||
+      isNumericLabValue(d.checklistHt) ||
+      isNumericLabValue(d.checklistPlaquetas) ||
+      isNumericLabValue(d.checklistSodio) ||
+      isNumericLabValue(d.checklistPotassio) ||
+      isNumericLabValue(d.checklistUreia) ||
+      isNumericLabValue(d.checklistCreatinina)
+    )
   );
 
   const listsToRender = filledLists.length > 0 ? filledLists : [{} as DailyChecklist];
