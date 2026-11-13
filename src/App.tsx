@@ -404,6 +404,12 @@ export interface DailyChecklist {
   checklistBalançoHidrico?: string;
   checklistDiurese?: string;
   checklistPh?: string;
+  checklistPao2?: string;
+  checklistPaco2?: string;
+  checklistHco3?: string;
+  checklistSao2?: string;
+  checklistPf?: string;
+  checklistSf?: string;
   checklistPao2Paco2?: string;
   checklistHco3Sao2?: string;
   checklistPfSf?: string;
@@ -417,6 +423,7 @@ export interface DailyChecklist {
   checklistInr?: string;
   checklistSodio?: string;
   checklistPotassio?: string;
+  checklistPcr?: string;
   checklistMagnesio?: string;
   checklistFosforo?: string;
   checklistTroponina?: string;
@@ -478,6 +485,12 @@ export const ensureDailyChecklists = (p: Patient): DailyChecklist[] => {
       checklistBalançoHidrico: p.checklistBalançoHidrico,
       checklistDiurese: p.checklistDiurese,
       checklistPh: p.checklistPh,
+      checklistPao2: p.checklistPao2,
+      checklistPaco2: p.checklistPaco2,
+      checklistHco3: p.checklistHco3,
+      checklistSao2: p.checklistSao2,
+      checklistPf: p.checklistPf,
+      checklistSf: p.checklistSf,
       checklistPao2Paco2: p.checklistPao2Paco2,
       checklistHco3Sao2: p.checklistHco3Sao2,
       checklistPfSf: p.checklistPfSf,
@@ -491,6 +504,7 @@ export const ensureDailyChecklists = (p: Patient): DailyChecklist[] => {
       checklistInr: p.checklistInr,
       checklistSodio: p.checklistSodio,
       checklistPotassio: p.checklistPotassio,
+      checklistPcr: p.checklistPcr,
       checklistMagnesio: p.checklistMagnesio,
       checklistFosforo: p.checklistFosforo,
       checklistTroponina: p.checklistTroponina,
@@ -623,6 +637,12 @@ export const renderGasometriaHistoryTable = (p: Patient) => {
     Boolean(d.checklistData && d.checklistData.trim()) &&
     Boolean(
       (d.checklistPh && d.checklistPh.trim()) || 
+      (d.checklistPao2 && d.checklistPao2.trim()) || 
+      (d.checklistPaco2 && d.checklistPaco2.trim()) || 
+      (d.checklistHco3 && d.checklistHco3.trim()) || 
+      (d.checklistSao2 && d.checklistSao2.trim()) || 
+      (d.checklistPf && d.checklistPf.trim()) || 
+      (d.checklistSf && d.checklistSf.trim()) || 
       (d.checklistPao2Paco2 && d.checklistPao2Paco2.trim()) || 
       (d.checklistHco3Sao2 && d.checklistHco3Sao2.trim()) || 
       (d.checklistPfSf && d.checklistPfSf.trim())
@@ -634,17 +654,28 @@ export const renderGasometriaHistoryTable = (p: Patient) => {
   const rowsHtml = listsToRender.map((d, index) => {
     const dataStr = d.checklistData || (filledLists.length === 0 ? '—' : `Gaso #${index + 1}`);
     const ph = d.checklistPh || '—';
-    const pao2 = d.checklistPao2Paco2 || '—';
-    const hco3 = d.checklistHco3Sao2 || '—';
-    const pfsf = d.checklistPfSf || '—';
+
+    const legacyPao2Parts = (d.checklistPao2Paco2 || '').split('/').map(s => s.trim());
+    const pao2 = d.checklistPao2 || legacyPao2Parts[0] || '—';
+    const paco2 = d.checklistPaco2 || legacyPao2Parts[1] || '—';
+
+    const legacyHco3Parts = (d.checklistHco3Sao2 || '').split('/').map(s => s.trim());
+    const hco3 = d.checklistHco3 || legacyHco3Parts[0] || '—';
+    const sao2 = d.checklistSao2 || legacyHco3Parts[1] || '—';
+
+    const pf = d.checklistPf || d.checklistPfSf || '—';
+    const sf = d.checklistSf || '—';
 
     return `
       <tr class="checklist-row">
         <td style="font-weight: 800; text-align: center; font-size: 8px; color: #0f172a; padding: 2.5px 3px; background-color: #f8fafc;">${dataStr}</td>
         <td style="text-align: center; font-size: 8px; font-weight: 700; padding: 2.5px 3px;">${ph}</td>
         <td style="text-align: center; font-size: 8px; font-weight: 700; padding: 2.5px 3px;">${pao2}</td>
+        <td style="text-align: center; font-size: 8px; font-weight: 700; padding: 2.5px 3px;">${paco2}</td>
         <td style="text-align: center; font-size: 8px; font-weight: 700; padding: 2.5px 3px;">${hco3}</td>
-        <td style="text-align: center; font-size: 8px; font-weight: 700; padding: 2.5px 3px;">${pfsf}</td>
+        <td style="text-align: center; font-size: 8px; font-weight: 700; padding: 2.5px 3px;">${sao2}</td>
+        <td style="text-align: center; font-size: 8px; font-weight: 700; padding: 2.5px 3px;">${pf}</td>
+        <td style="text-align: center; font-size: 8px; font-weight: 700; padding: 2.5px 3px;">${sf}</td>
       </tr>
     `;
   }).join('');
@@ -654,11 +685,14 @@ export const renderGasometriaHistoryTable = (p: Patient) => {
     <table class="checklist-table" style="margin-top: 2px; margin-bottom: 6px; table-layout: fixed;">
       <thead>
         <tr>
-          <th style="width: 16%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">DATA</th>
-          <th style="width: 16%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">pH</th>
-          <th style="width: 26%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">PaO2 / PaCO2</th>
-          <th style="width: 24%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">HCO3 / SaO2</th>
-          <th style="width: 18%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">P/F ou S/F</th>
+          <th style="width: 12.5%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">DATA</th>
+          <th style="width: 12.5%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">pH</th>
+          <th style="width: 12.5%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">PaO2</th>
+          <th style="width: 12.5%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">PaCO2</th>
+          <th style="width: 12.5%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">HCO3</th>
+          <th style="width: 12.5%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">SaO2</th>
+          <th style="width: 12.5%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">P/F</th>
+          <th style="width: 12.5%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7.5px; padding: 3px;">S/F</th>
         </tr>
       </thead>
       <tbody>
@@ -703,7 +737,7 @@ export const renderLaboratorioHistoryTable = (p: Patient) => {
     const inr = d.checklistInr || '—';
     const na = d.checklistSodio || '—';
     const k = d.checklistPotassio || '—';
-    const mgP = (d.checklistMagnesio || d.checklistFosforo) ? `Mg:${d.checklistMagnesio || '—'} | P:${d.checklistFosforo || '—'}` : '—';
+    const pcr = d.checklistPcr || '—';
     const urCr = (d.checklistUreia || d.checklistCreatinina) ? `Ur:${d.checklistUreia || '—'} | Cr:${d.checklistCreatinina || '—'}` : '—';
     const trop = d.checklistTroponina || '—';
     const outros = d.checklistBioquimicaOutros || '—';
@@ -718,7 +752,7 @@ export const renderLaboratorioHistoryTable = (p: Patient) => {
         <td style="text-align: center; font-size: 7.5px; font-weight: 700; padding: 2px 2.5px;">${inr}</td>
         <td style="text-align: center; font-size: 7.5px; font-weight: 700; padding: 2px 2.5px;">${na}</td>
         <td style="text-align: center; font-size: 7.5px; font-weight: 700; padding: 2px 2.5px;">${k}</td>
-        <td style="text-align: center; font-size: 7px; font-weight: 600; padding: 2px 2.5px;">${mgP}</td>
+        <td style="text-align: center; font-size: 7.5px; font-weight: 700; padding: 2px 2.5px;">${pcr}</td>
         <td style="text-align: center; font-size: 7px; font-weight: 600; padding: 2px 2.5px;">${urCr}</td>
         <td style="text-align: center; font-size: 7.5px; font-weight: 700; padding: 2px 2.5px;">${trop}</td>
         <td style="text-align: center; font-size: 7px; font-weight: 600; padding: 2px 2.5px;">${outros}</td>
@@ -739,10 +773,10 @@ export const renderLaboratorioHistoryTable = (p: Patient) => {
           <th style="width: 6%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">INR</th>
           <th style="width: 6%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Na</th>
           <th style="width: 6%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">K</th>
-          <th style="width: 10%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Mg / P</th>
+          <th style="width: 8%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">PCR</th>
           <th style="width: 12%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Ur / Cr</th>
           <th style="width: 6%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Trop</th>
-          <th style="width: 11%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Outros</th>
+          <th style="width: 13%; text-align: center; background-color: #e2e8f0; color: #0f172a; font-weight: 800; font-size: 7px; padding: 2.5px;">Outros</th>
         </tr>
       </thead>
       <tbody>
@@ -849,6 +883,12 @@ export interface Patient {
   checklistBalançoHidrico?: string;
   checklistDiurese?: string;
   checklistPh?: string;
+  checklistPao2?: string;
+  checklistPaco2?: string;
+  checklistHco3?: string;
+  checklistSao2?: string;
+  checklistPf?: string;
+  checklistSf?: string;
   checklistPao2Paco2?: string;
   checklistHco3Sao2?: string;
   checklistPfSf?: string;
@@ -862,6 +902,7 @@ export interface Patient {
   checklistInr?: string;
   checklistSodio?: string;
   checklistPotassio?: string;
+  checklistPcr?: string;
   checklistMagnesio?: string;
   checklistFosforo?: string;
   checklistTroponina?: string;
@@ -3366,7 +3407,7 @@ export default function InfusionApp() {
       'BIL. TOTAIS E FRAÇÕES': false,
       'TGO/TGP': false,
       'SUMÁRIO DE URINA': false,
-      'PCR': true,
+      'PCR QUANTITATIVO': true,
       'TAP/TTPA': false,
       'CK NAC/CK MB': false,
       'TROPONINA': false,
@@ -3407,7 +3448,7 @@ export default function InfusionApp() {
           'BIL. TOTAIS E FRAÇÕES': false,
           'TGO/TGP': false,
           'SUMÁRIO DE URINA': false,
-          'PCR': true,
+          'PCR QUANTITATIVO': true,
           'TAP/TTPA': false,
           'CK NAC/CK MB': false,
           'TROPONINA': false,
@@ -5146,7 +5187,7 @@ export default function InfusionApp() {
       'BIL. TOTAIS E FRAÇÕES',
       'TGO/TGP',
       'SUMÁRIO DE URINA',
-      'PCR',
+      'PCR QUANTITATIVO',
       'TAP/TTPA',
       'CK NAC/CK MB',
       'TROPONINA',
@@ -5681,7 +5722,7 @@ export default function InfusionApp() {
       'BIL. TOTAIS E FRAÇÕES': false,
       'TGO/TGP': false,
       'SUMÁRIO DE URINA': false,
-      'PCR': true,
+      'PCR QUANTITATIVO': true,
       'TAP/TTPA': false,
       'CK NAC/CK MB': false,
       'TROPONINA': false,

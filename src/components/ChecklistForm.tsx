@@ -262,6 +262,12 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
       checklistBalançoHidrico: '',
       checklistDiurese: '',
       checklistPh: '',
+      checklistPao2: '',
+      checklistPaco2: '',
+      checklistHco3: '',
+      checklistSao2: '',
+      checklistPf: '',
+      checklistSf: '',
       checklistPao2Paco2: '',
       checklistHco3Sao2: '',
       checklistPfSf: '',
@@ -275,6 +281,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
       checklistInr: '',
       checklistSodio: '',
       checklistPotassio: '',
+      checklistPcr: '',
       checklistMagnesio: '',
       checklistFosforo: '',
       checklistTroponina: '',
@@ -350,6 +357,12 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
     checklistBalançoHidrico: activeChecklist.checklistBalançoHidrico,
     checklistDiurese: activeChecklist.checklistDiurese,
     checklistPh: activeChecklist.checklistPh,
+    checklistPao2: activeChecklist.checklistPao2,
+    checklistPaco2: activeChecklist.checklistPaco2,
+    checklistHco3: activeChecklist.checklistHco3,
+    checklistSao2: activeChecklist.checklistSao2,
+    checklistPf: activeChecklist.checklistPf,
+    checklistSf: activeChecklist.checklistSf,
     checklistPao2Paco2: activeChecklist.checklistPao2Paco2,
     checklistHco3Sao2: activeChecklist.checklistHco3Sao2,
     checklistPfSf: activeChecklist.checklistPfSf,
@@ -363,6 +376,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
     checklistInr: activeChecklist.checklistInr,
     checklistSodio: activeChecklist.checklistSodio,
     checklistPotassio: activeChecklist.checklistPotassio,
+    checklistPcr: activeChecklist.checklistPcr,
     checklistMagnesio: activeChecklist.checklistMagnesio,
     checklistFosforo: activeChecklist.checklistFosforo,
     checklistTroponina: activeChecklist.checklistTroponina,
@@ -414,6 +428,13 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
       chk.checklistBalançoHidrico,
       chk.checklistDiurese,
       chk.checklistPh,
+      chk.checklistPao2,
+      chk.checklistPaco2,
+      chk.checklistHco3,
+      chk.checklistSao2,
+      chk.checklistPf,
+      chk.checklistSf,
+      chk.checklistPcr,
       chk.checklistPendencias,
       chk.checklistIntercorrencias,
       chk.checklistCondutas,
@@ -577,6 +598,12 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
       checklistBalançoHidrico: updatedPatient.checklistBalançoHidrico,
       checklistDiurese: updatedPatient.checklistDiurese,
       checklistPh: updatedPatient.checklistPh,
+      checklistPao2: updatedPatient.checklistPao2,
+      checklistPaco2: updatedPatient.checklistPaco2,
+      checklistHco3: updatedPatient.checklistHco3,
+      checklistSao2: updatedPatient.checklistSao2,
+      checklistPf: updatedPatient.checklistPf,
+      checklistSf: updatedPatient.checklistSf,
       checklistPao2Paco2: updatedPatient.checklistPao2Paco2,
       checklistHco3Sao2: updatedPatient.checklistHco3Sao2,
       checklistPfSf: updatedPatient.checklistPfSf,
@@ -590,6 +617,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
       checklistInr: updatedPatient.checklistInr,
       checklistSodio: updatedPatient.checklistSodio,
       checklistPotassio: updatedPatient.checklistPotassio,
+      checklistPcr: updatedPatient.checklistPcr,
       checklistMagnesio: updatedPatient.checklistMagnesio,
       checklistFosforo: updatedPatient.checklistFosforo,
       checklistTroponina: updatedPatient.checklistTroponina,
@@ -1618,36 +1646,57 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
           {/* GASOMETRIA */}
           <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-1.5">
             <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Gasometria</span>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-4 gap-1">
               <input
                 type="text"
                 placeholder="pH"
                 value={patient.checklistPh || ''}
                 onChange={(e) => updatePatient({ ...patient, checklistPh: e.target.value })}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
               />
               <input
                 type="text"
-                placeholder="PaO2 / PaCO2"
-                value={patient.checklistPao2Paco2 || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistPao2Paco2: e.target.value })}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                placeholder="PaO2"
+                value={patient.checklistPao2 || ''}
+                onChange={(e) => updatePatient({ ...patient, checklistPao2: e.target.value })}
+                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+              />
+              <input
+                type="text"
+                placeholder="PaCO2"
+                value={patient.checklistPaco2 || ''}
+                onChange={(e) => updatePatient({ ...patient, checklistPaco2: e.target.value })}
+                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+              />
+              <input
+                type="text"
+                placeholder="HCO3"
+                value={patient.checklistHco3 || ''}
+                onChange={(e) => updatePatient({ ...patient, checklistHco3: e.target.value })}
+                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-1">
               <input
                 type="text"
-                placeholder="HCO3 / SaO2"
-                value={patient.checklistHco3Sao2 || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistHco3Sao2: e.target.value })}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                placeholder="SaO2"
+                value={patient.checklistSao2 || ''}
+                onChange={(e) => updatePatient({ ...patient, checklistSao2: e.target.value })}
+                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
               />
               <input
                 type="text"
-                placeholder="P/F ou S/F"
-                value={patient.checklistPfSf || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistPfSf: e.target.value })}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                placeholder="P/F"
+                value={patient.checklistPf || ''}
+                onChange={(e) => updatePatient({ ...patient, checklistPf: e.target.value })}
+                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+              />
+              <input
+                type="text"
+                placeholder="S/F"
+                value={patient.checklistSf || ''}
+                onChange={(e) => updatePatient({ ...patient, checklistSf: e.target.value })}
+                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
               />
             </div>
           </div>
@@ -1723,27 +1772,13 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
               />
               <input
                 type="text"
-                placeholder="Mg"
-                value={patient.checklistMagnesio || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistMagnesio: e.target.value })}
+                placeholder="PCR"
+                value={patient.checklistPcr || ''}
+                onChange={(e) => updatePatient({ ...patient, checklistPcr: e.target.value })}
                 className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
               />
             </div>
-            <div className="grid grid-cols-4 gap-1">
-              <input
-                type="text"
-                placeholder="P"
-                value={patient.checklistFosforo || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistFosforo: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="Trop."
-                value={patient.checklistTroponina || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistTroponina: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
+            <div className="grid grid-cols-3 gap-1">
               <input
                 type="text"
                 placeholder="Ureia"
@@ -1756,6 +1791,13 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                 placeholder="Creat."
                 value={patient.checklistCreatinina || ''}
                 onChange={(e) => updatePatient({ ...patient, checklistCreatinina: e.target.value })}
+                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+              />
+              <input
+                type="text"
+                placeholder="Trop."
+                value={patient.checklistTroponina || ''}
+                onChange={(e) => updatePatient({ ...patient, checklistTroponina: e.target.value })}
                 className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
               />
             </div>
