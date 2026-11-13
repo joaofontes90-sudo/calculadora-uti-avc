@@ -744,66 +744,69 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
   };
 
   return (
-    <div className="space-y-2.5">
-      {/* Barra Compacta em 1 Linha: Paginação + 6 Colunas de Evolução */}
-      <div className="bg-white px-3 py-2 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <span className="text-xs font-black text-slate-800 uppercase tracking-tight">
-            Checklist Diário UAVC
+    <div className="flex-1 flex flex-col justify-between gap-3 h-full">
+      {/* Barra Superior do Checklist: Maior verticalmente, sem abreviações e foco na DATA */}
+      <div className="bg-white px-4 py-3 rounded-xl border border-slate-200/80 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <span className="text-sm md:text-base font-black text-slate-800 uppercase tracking-tight">
+            Check-list Diário UAVC
           </span>
 
-          {/* Controles de Paginação */}
-          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+          {/* Controles de Paginação por extenso */}
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
               type="button"
               disabled={currentPage <= 1}
               onClick={handlePrevPage}
-              className="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-0.5 bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/80 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/80 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
-              <ChevronLeft className="w-3 h-3" />
-              <span>Ant</span>
+              <ChevronLeft className="w-4 h-4" />
+              <span>Anterior</span>
             </button>
 
-            <span className="px-2.5 py-1 rounded-md text-[10px] font-black text-blue-700 bg-blue-50 border border-blue-200/60">
-              Folha {currentPage}/{totalPages} (Cols {startIndex + 1}–{startIndex + 6})
+            <span className="px-3.5 py-1.5 rounded-lg text-xs font-black text-blue-700 bg-blue-50 border border-blue-200/70">
+              Folha {currentPage} de {totalPages} (Colunas {startIndex + 1} a {startIndex + 6})
             </span>
 
             <button
               type="button"
               onClick={handleNextPage}
-              className="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-0.5 bg-blue-600 text-white hover:bg-blue-700 shadow-2xs"
+              className="px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 bg-blue-600 text-white hover:bg-blue-700 shadow-2xs cursor-pointer"
             >
-              <span>Próx</span>
-              <ChevronRight className="w-3 h-3" />
+              <span>Próximo</span>
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* 6 Pílulas de Coluna Horizontais */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 flex-1 max-w-4xl">
+        {/* 6 Botões de Evolução: Apenas a DATA bem visível nas preenchidas, ou "Coluna X" por extenso nas vazias */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 flex-1 max-w-4xl">
           {visibleChecklists.map((list, colOffset) => {
             const realIdx = startIndex + colOffset;
             const isActive = realIdx === activeIndex;
-            const isFilled = !!list.checklistData;
+            const isFilled = !!list.checklistData && list.checklistData.trim() !== '';
             return (
               <button
                 key={realIdx}
                 type="button"
                 onClick={() => setActiveIndex(realIdx)}
-                className={`py-1.5 px-2.5 rounded-lg border text-left transition-all flex items-center justify-between gap-1 cursor-pointer ${
+                className={`py-2 px-3 rounded-xl border text-center transition-all flex items-center justify-center cursor-pointer ${
                   isActive
-                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm ring-2 ring-blue-300/60'
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm ring-2 ring-blue-300/70'
                     : isFilled
-                      ? 'bg-emerald-50/90 border-emerald-300 hover:border-emerald-400 text-emerald-900'
+                      ? 'bg-emerald-50 border-emerald-300 hover:border-emerald-400 text-emerald-900'
                       : 'bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-600'
                 }`}
               >
-                <span className={`text-[10px] font-black uppercase tracking-tight ${isActive ? 'text-white' : isFilled ? 'text-emerald-800' : 'text-slate-500'}`}>
-                  Col {realIdx + 1}
-                </span>
-                <span className={`text-[10px] font-bold truncate ${isActive ? 'text-blue-100' : isFilled ? 'text-emerald-700' : 'text-slate-400'}`}>
-                  {list.checklistData || 'Vazia'}
-                </span>
+                {isFilled ? (
+                  <span className={`text-sm font-black tracking-wide ${isActive ? 'text-white' : 'text-emerald-800'}`}>
+                    {list.checklistData}
+                  </span>
+                ) : (
+                  <span className={`text-xs font-black uppercase tracking-wider ${isActive ? 'text-white' : 'text-slate-500'}`}>
+                    Coluna {realIdx + 1}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -811,53 +814,53 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
       </div>
 
       {/* =====================================================================
-          LINHA SUPERIOR: 3 QUADROS DE MESMO TAMANHO HORIZONTAL E VERTICAL
+          LINHA SUPERIOR: 3 QUADROS DE MESMO TAMANHO HORIZONTAL E VERTICAL (~20% MAIORES)
           1) AVALIAÇÃO NEUROLÓGICA (Azul claro discreto)
           2) TERAPÊUTICA & MEDICAÇÕES (Verde claro discreto)
           3) SUPORTE VENTILATÓRIO & DROGAS
          ===================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-stretch flex-1">
 
         {/* QUADRO SUPERIOR 1: AVALIAÇÃO NEUROLÓGICA */}
-        <div className="bg-blue-50/45 p-3 rounded-xl border border-blue-200/80 shadow-2xs flex flex-col justify-between h-full text-left">
-          <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-blue-200/60 shrink-0">
+        <div className="bg-blue-50/45 p-4 rounded-xl border border-blue-200/80 shadow-2xs flex flex-col justify-between h-full min-h-[340px] text-left">
+          <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-blue-200/60 shrink-0">
             <div className="flex items-center gap-1.5">
-              <Activity size={14} className="text-blue-600" />
+              <Activity size={15} className="text-blue-600" />
               <span className="text-xs font-black text-blue-800 uppercase tracking-wider">Avaliação Neurológica</span>
             </div>
-            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-white text-blue-700 border border-blue-200">
-              Coluna {activeIndex + 1}
+            <span className="text-[11px] font-black uppercase px-2.5 py-0.5 rounded-md bg-white text-blue-700 border border-blue-200">
+              {patient.checklistData ? patient.checklistData : `Coluna ${activeIndex + 1}`}
             </span>
           </div>
 
-          <div className="flex-1 flex flex-col justify-between gap-2">
+          <div className="flex-1 flex flex-col justify-between gap-3">
             {/* Linha 1: Data do Checklist + NIHSS Atual + Glasgow/RASS */}
-            <div className="grid grid-cols-12 gap-2 items-end">
+            <div className="grid grid-cols-12 gap-2.5 items-end">
               <div className="col-span-4">
-                <label className="block text-[10px] font-black text-blue-800 uppercase tracking-wider mb-1 leading-none">Data Check</label>
+                <label className="block text-[10.5px] font-black text-blue-800 uppercase tracking-wider mb-1.5 leading-none">Data Check</label>
                 <input
                   type="text"
                   placeholder="DD/MM/AA"
                   maxLength={8}
                   value={patient.checklistData || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistData: handleDateMask(e.target.value) })}
-                  className={`w-full px-2 py-1.5 bg-white border border-blue-300 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-black text-slate-800 text-center ${theme.ringColor}`}
+                  className={`w-full px-2.5 py-2 bg-white border border-blue-300 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-black text-slate-800 text-center ${theme.ringColor}`}
                 />
               </div>
 
               <div className="col-span-3">
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">NIHSS Atual</label>
+                <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">NIHSS Atual</label>
                 <input
                   type="number"
                   placeholder="Pontos"
                   value={patient.checklistNihssAtual || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistNihssAtual: e.target.value })}
-                  className={`w-full px-2 py-1.5 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-2.5 py-2 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
 
               <div className="col-span-5">
-                <div className="flex items-center justify-end mb-1">
+                <div className="flex items-center justify-end mb-1.5">
                   <div className="flex gap-1 bg-white p-0.5 rounded-lg border border-blue-200 w-full">
                     <button
                       type="button"
@@ -866,7 +869,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                           updatePatient({ ...patient, checklistGlasgow: '' });
                         }
                       }}
-                      className={`flex-1 px-2 py-0.5 text-[10px] font-black rounded-md transition-all cursor-pointer ${
+                      className={`flex-1 px-2 py-1 text-[10.5px] font-black rounded-md transition-all cursor-pointer ${
                         !patient.checklistGlasgow?.startsWith('RASS')
                           ? 'bg-blue-600 text-white shadow-2xs'
                           : 'text-slate-500 hover:text-slate-800'
@@ -881,7 +884,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                           updatePatient({ ...patient, checklistGlasgow: 'RASS: 0' });
                         }
                       }}
-                      className={`flex-1 px-2 py-0.5 text-[10px] font-black rounded-md transition-all cursor-pointer ${
+                      className={`flex-1 px-2 py-1 text-[10.5px] font-black rounded-md transition-all cursor-pointer ${
                         patient.checklistGlasgow?.startsWith('RASS')
                           ? 'bg-blue-600 text-white shadow-2xs'
                           : 'text-slate-500 hover:text-slate-800'
@@ -900,13 +903,13 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                     max="15"
                     value={patient.checklistGlasgow || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistGlasgow: e.target.value })}
-                    className={`w-full px-2 py-1.5 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                    className={`w-full px-2.5 py-2 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                   />
                 ) : (
                   <select
                     value={patient.checklistGlasgow || 'RASS: 0'}
                     onChange={(e) => updatePatient({ ...patient, checklistGlasgow: e.target.value })}
-                    className={`w-full px-1.5 py-1.5 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                    className={`w-full px-2 py-2 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                   >
                     <option value="RASS: +4">RASS +4</option>
                     <option value="RASS: +3">RASS +3</option>
@@ -924,45 +927,45 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
             </div>
 
             {/* Linha 2: Pupila + Padrão Respiratório */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Pupila</label>
+                <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">Pupila</label>
                 <input
                   type="text"
                   placeholder="Ex: Isocórica / Fotorreagente"
                   value={patient.checklistPup || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistPup: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  className={`w-full px-3 py-2 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Padrão Respiratório</label>
+                <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">Padrão Respiratório</label>
                 <input
                   type="text"
                   placeholder="Ex: Eupneico / Sem alterações"
                   value={patient.checklistResp || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistResp: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  className={`w-full px-3 py-2 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                 />
               </div>
             </div>
 
             {/* Linha 3: Déficit Motor */}
             <div>
-              <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Déficit Motor</label>
+              <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">Déficit Motor</label>
               <input
                 type="text"
                 placeholder="Ex: Hemiparesia D (MSD FM 3/5) / Sem déficit"
                 value={patient.checklistMotor || ''}
                 onChange={(e) => updatePatient({ ...patient, checklistMotor: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                className={`w-full px-3 py-2 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
               />
             </div>
           </div>
         </div>
 
-        {/* QUADRO SUPERIOR 2: TERAPÊUTICA & MEDICAÇÕES (Verde claro discreto) */}
-        <div className="bg-emerald-50/45 p-3 rounded-xl border border-emerald-200/80 shadow-2xs flex flex-col justify-between h-full text-left">
+        {/* QUADRO SUPERIOR 2: TERAPÊUTICA & MEDICAÇÕES (Verde claro discreto, sem barra de rolagem precoce em ATB) */}
+        <div className="bg-emerald-50/45 p-4 rounded-xl border border-emerald-200/80 shadow-2xs flex flex-col justify-between h-full min-h-[340px] text-left">
           {(() => {
             const rawText = patient.checklistAntibioticoText || '';
             const abxList = rawText.includes('\n') ? rawText.split('\n') : [rawText];
@@ -996,28 +999,28 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
 
             return (
               <>
-                <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-emerald-200/60 shrink-0">
+                <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-emerald-200/60 shrink-0">
                   <div className="flex items-center gap-1.5">
-                    <Pill size={14} className="text-emerald-600" />
+                    <Pill size={15} className="text-emerald-600" />
                     <span className="text-xs font-black text-emerald-800 uppercase tracking-wider">Terapêutica & Medicações</span>
                   </div>
                   {patient.checklistAntibiotico !== 'Não' && (
                     <button
                       type="button"
                       onClick={handleAddAbx}
-                      className="flex items-center gap-1 text-[10px] font-black text-emerald-700 hover:text-emerald-800 bg-white hover:bg-emerald-100 px-2 py-0.5 rounded-md transition-all border border-emerald-200"
+                      className="flex items-center gap-1 text-[10.5px] font-black text-emerald-700 hover:text-emerald-800 bg-white hover:bg-emerald-100 px-2.5 py-1 rounded-md transition-all border border-emerald-200 cursor-pointer"
                     >
-                      <Plus size={11} />
+                      <Plus size={12} />
                       <span>+ ATB</span>
                     </button>
                   )}
                 </div>
 
-                <div className="flex-1 flex flex-col justify-between gap-2">
-                  {/* Linha 1: Antibiótico em Uso (Sim/Não + Qual ATB + Dia na mesma linha) */}
+                <div className="flex-1 flex flex-col justify-between gap-3">
+                  {/* Linha 1: Antibiótico em Uso (Espaço amplo para múltiplos ATBs sem barra de rolagem) */}
                   <div>
-                    <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Antibiótico em Uso</label>
-                    <div className="space-y-1 max-h-20 overflow-y-auto pr-0.5 custom-scrollbar">
+                    <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">Antibiótico em Uso</label>
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto pr-0.5 custom-scrollbar">
                       {patient.checklistAntibiotico === 'Não' ? (
                         <div className="flex items-center gap-2">
                           <div className="flex bg-white p-0.5 rounded-lg border border-emerald-200 shrink-0">
@@ -1026,7 +1029,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                                 key={opt}
                                 type="button"
                                 onClick={() => updatePatient({ ...patient, checklistAntibiotico: patient.checklistAntibiotico === opt ? '' : (opt as any) })}
-                                className={`px-2.5 py-1 rounded-md text-[10px] font-black transition-all ${
+                                className={`px-3 py-1.5 rounded-md text-[10.5px] font-black transition-all ${
                                   patient.checklistAntibiotico === opt
                                     ? opt === 'Sim'
                                       ? 'bg-blue-600 text-white shadow-2xs'
@@ -1052,7 +1055,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                                       key={opt}
                                       type="button"
                                       onClick={() => updatePatient({ ...patient, checklistAntibiotico: patient.checklistAntibiotico === opt ? '' : (opt as any) })}
-                                      className={`px-2 py-1 rounded-md text-[10px] font-black transition-all ${
+                                      className={`px-2.5 py-1.5 rounded-md text-[10.5px] font-black transition-all ${
                                         patient.checklistAntibiotico === opt
                                           ? opt === 'Sim'
                                             ? 'bg-blue-600 text-white shadow-2xs'
@@ -1070,7 +1073,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                                 placeholder="Qual antibiótico? (Ex: Ceftriaxona)"
                                 value={parsed.name}
                                 onChange={(e) => handleAbxNameChange(idx, e.target.value)}
-                                className={`flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-emerald-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                                className={`flex-1 min-w-0 px-3 py-2 bg-white border border-emerald-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                               />
                               <input
                                 type="number"
@@ -1079,16 +1082,16 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                                 placeholder="Dia"
                                 value={parsed.day}
                                 onChange={(e) => handleAbxDayChange(idx, e.target.value)}
-                                className={`w-16 shrink-0 px-1.5 py-1.5 bg-white border border-emerald-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                                className={`w-16 shrink-0 px-1.5 py-2 bg-white border border-emerald-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                               />
                               {displayList.length > 1 && (
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveAbx(idx)}
                                   title="Remover este antibiótico"
-                                  className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all shrink-0"
+                                  className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all shrink-0"
                                 >
-                                  <Trash2 size={13} />
+                                  <Trash2 size={14} />
                                 </button>
                               )}
                             </div>
@@ -1100,25 +1103,25 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
 
                   {/* Linha 2: Antiagregante Plaquetário */}
                   <div>
-                    <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Antiagregante Plaquetário</label>
+                    <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">Antiagregante Plaquetário</label>
                     <input
                       type="text"
                       placeholder="Ex: AAS 100mg VO, Clopidogrel 75mg..."
                       value={patient.checklistAntiagregante || ''}
                       onChange={(e) => updatePatient({ ...patient, checklistAntiagregante: e.target.value })}
-                      className={`w-full px-2.5 py-1.5 bg-white border border-emerald-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                      className={`w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                     />
                   </div>
 
                   {/* Linha 3: Anticoagulante / Profilaxia TEV */}
                   <div>
-                    <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Anticoagulante / Profilaxia TEV</label>
+                    <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">Anticoagulante / Profilaxia TEV</label>
                     <input
                       type="text"
                       placeholder="Ex: Enoxaparina 40mg SC 1x/dia, HNF..."
                       value={patient.checklistAnticoagulante || ''}
                       onChange={(e) => updatePatient({ ...patient, checklistAnticoagulante: e.target.value })}
-                      className={`w-full px-2.5 py-1.5 bg-white border border-emerald-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                      className={`w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                     />
                   </div>
                 </div>
@@ -1128,28 +1131,28 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
         </div>
 
         {/* QUADRO SUPERIOR 3: SUPORTE VENTILATÓRIO & DROGAS (Mesmo tamanho horizontal e vertical) */}
-        <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between h-full text-left">
-          <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-slate-100 shrink-0">
+        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between h-full min-h-[340px] text-left">
+          <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-100 shrink-0">
             <div className="flex items-center gap-1.5">
-              <Activity size={14} className="text-indigo-600" />
+              <Activity size={15} className="text-indigo-600" />
               <span className="text-xs font-black text-indigo-700 uppercase tracking-wider">Suporte Ventilatório & Drogas</span>
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col justify-between gap-2">
+          <div className="flex-1 flex flex-col justify-between gap-3">
             {/* Linha 1: Sedação e Analgesia lado a lado */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-1">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider leading-none">Sedação</span>
+                    <span className="text-[10.5px] font-black text-slate-500 uppercase tracking-wider leading-none">Sedação</span>
                     <button
                       type="button"
                       onClick={handleRefreshSedacao}
                       title="Atualizar com as infusões ativas"
                       className="text-indigo-600 hover:text-indigo-800 p-0.5 rounded hover:bg-indigo-50 transition-colors"
                     >
-                      <RefreshCw size={10} />
+                      <RefreshCw size={11} />
                     </button>
                   </div>
                   <div className="flex bg-slate-100 p-0.5 rounded border border-slate-200">
@@ -1158,7 +1161,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                         key={opt}
                         type="button"
                         onClick={() => updatePatient({ ...patient, checklistSedacao: patient.checklistSedacao === opt ? '' : (opt as any) })}
-                        className={`px-1.5 py-0.2 rounded text-[9px] font-black transition-all ${
+                        className={`px-2 py-0.5 rounded text-[9.5px] font-black transition-all ${
                           patient.checklistSedacao === opt
                             ? opt === 'Sim'
                               ? 'bg-blue-600 text-white'
@@ -1176,21 +1179,21 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                   placeholder="Fármaco / Dose / RASS"
                   value={patient.checklistSedacaoText || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistSedacaoText: e.target.value })}
-                  className={`w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  className={`w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                 />
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-1">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider leading-none">Analgesia</span>
+                    <span className="text-[10.5px] font-black text-slate-500 uppercase tracking-wider leading-none">Analgesia</span>
                     <button
                       type="button"
                       onClick={handleRefreshAnalgesia}
                       title="Atualizar com as infusões ativas"
                       className="text-indigo-600 hover:text-indigo-800 p-0.5 rounded hover:bg-indigo-50 transition-colors"
                     >
-                      <RefreshCw size={10} />
+                      <RefreshCw size={11} />
                     </button>
                   </div>
                   <div className="flex bg-slate-100 p-0.5 rounded border border-slate-200">
@@ -1199,7 +1202,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                         key={opt}
                         type="button"
                         onClick={() => updatePatient({ ...patient, checklistAnalgesia: patient.checklistAnalgesia === opt ? '' : (opt as any) })}
-                        className={`px-1.5 py-0.2 rounded text-[9px] font-black transition-all ${
+                        className={`px-2 py-0.5 rounded text-[9.5px] font-black transition-all ${
                           patient.checklistAnalgesia === opt
                             ? opt === 'Sim'
                               ? 'bg-blue-600 text-white'
@@ -1217,24 +1220,24 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                   placeholder="Fármaco / Dose"
                   value={patient.checklistAnalgesiaText || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistAnalgesiaText: e.target.value })}
-                  className={`w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  className={`w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                 />
               </div>
             </div>
 
             {/* Linha 2: DVA + BNM + Desmame */}
-            <div className="grid grid-cols-12 gap-2 items-end">
+            <div className="grid grid-cols-12 gap-2.5 items-end">
               <div className="col-span-5">
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-1">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider leading-none">DVA</span>
+                    <span className="text-[10.5px] font-black text-slate-500 uppercase tracking-wider leading-none">DVA</span>
                     <button
                       type="button"
                       onClick={handleRefreshDva}
                       title="Atualizar com as infusões ativas"
                       className="text-indigo-600 hover:text-indigo-800 p-0.5 rounded hover:bg-indigo-50 transition-colors"
                     >
-                      <RefreshCw size={10} />
+                      <RefreshCw size={11} />
                     </button>
                   </div>
                   <div className="flex bg-slate-100 p-0.5 rounded border border-slate-200">
@@ -1243,7 +1246,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                         key={opt}
                         type="button"
                         onClick={() => updatePatient({ ...patient, checklistDva: patient.checklistDva === opt ? '' : (opt as any) })}
-                        className={`px-1 py-0.2 rounded text-[8.5px] font-black transition-all ${
+                        className={`px-1.5 py-0.5 rounded text-[9px] font-black transition-all ${
                           patient.checklistDva === opt
                             ? opt === 'Sim'
                               ? 'bg-blue-600 text-white'
@@ -1263,30 +1266,30 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                   placeholder="Droga / Vazão / PAM"
                   value={patient.checklistDvaText || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistDvaText: e.target.value })}
-                  className={`w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  className={`w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                 />
               </div>
 
               <div className="col-span-4">
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-none">BNM (Bloqueador)</label>
+                <label className="block text-[10.5px] font-black text-slate-500 uppercase tracking-wider mb-1.5 leading-none">BNM (Bloqueador)</label>
                 <input
                   type="text"
                   placeholder="Qual / Dose"
                   value={patient.checklistBloqueadorNeuromuscular || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistBloqueadorNeuromuscular: e.target.value })}
-                  className={`w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  className={`w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                 />
               </div>
 
               <div className="col-span-3">
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-none text-center">Desmame</label>
+                <label className="block text-[10.5px] font-black text-slate-500 uppercase tracking-wider mb-1.5 leading-none text-center">Desmame</label>
                 <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
                   {['Sim', 'Não', 'N/A'].map((opt) => (
                     <button
                       key={opt}
                       type="button"
                       onClick={() => updatePatient({ ...patient, checklistDesmameVm: patient.checklistDesmameVm === opt ? '' : (opt as any) })}
-                      className={`flex-1 py-1 rounded-md text-[9px] font-black transition-all ${
+                      className={`flex-1 py-1.5 rounded-md text-[9.5px] font-black transition-all ${
                         patient.checklistDesmameVm === opt
                           ? opt === 'Sim'
                             ? 'bg-blue-600 text-white shadow-2xs'
@@ -1303,12 +1306,12 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
               </div>
             </div>
 
-            {/* Linha 3: Ventilação (2 linhas com 3 itens em cada) + Parâmetros + Dias VM */}
-            <div className="grid grid-cols-12 gap-2 items-center pt-1.5 border-t border-slate-100">
-              <div className="col-span-6 grid grid-cols-3 gap-1">
+            {/* Linha 3: Ventilação (2 linhas com 3 itens em cada, Venturi por extenso) + Parâmetros + Dias VM */}
+            <div className="grid grid-cols-12 gap-2.5 items-center pt-2 border-t border-slate-100">
+              <div className="col-span-6 grid grid-cols-3 gap-1.5">
                 {[
                   { id: 'ar_ambiente', label: 'A.A.' },
-                  { id: 'venturi', label: 'M.V.' },
+                  { id: 'venturi', label: 'Venturi' },
                   { id: 'canula_nasal', label: 'C.N.' },
                   { id: 'ventilacao_mecanica', label: 'VM' },
                   { id: 'tot', label: 'TOT' },
@@ -1326,7 +1329,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                           : [...current, opt.id];
                         updatePatient({ ...patient, checklistVentilacao: updated });
                       }}
-                      className={`py-1 px-1.5 rounded-md text-[10px] font-black border text-center transition-all ${
+                      className={`py-1.5 px-1.5 rounded-md text-[10.5px] font-black border text-center transition-all cursor-pointer ${
                         isSelected
                           ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
                           : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
@@ -1339,25 +1342,25 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
               </div>
 
               <div className="col-span-4">
-                <label className="block text-[9.5px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-none">Obs / Parâmetros</label>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5 leading-none">Obs / Parâmetros</label>
                 <input
                   type="text"
                   placeholder="Obs / Parâm."
                   value={patient.checklistVentilacaoOutros || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistVentilacaoOutros: e.target.value })}
-                  className={`w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  className={`w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                 />
               </div>
 
               <div className="col-span-2">
-                <label className="block text-[9.5px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-none text-center">Dias VM</label>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5 leading-none text-center">Dias VM</label>
                 <input
                   type="number"
                   placeholder="Dias"
                   title="Dias de Ventilação Mecânica"
                   value={patient.checklistDiasVm || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistDiasVm: e.target.value })}
-                  className={`w-full px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-1.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
             </div>
@@ -1367,25 +1370,25 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
       </div>
 
       {/* =====================================================================
-          LINHA INFERIOR: 3 QUADROS ALINHADOS COM OS 3 DE CIMA
+          LINHA INFERIOR: 3 QUADROS ALINHADOS COM OS 3 DE CIMA (~20% MAIORES)
           1) HEMODINÂMICA & CUIDADOS (Vermelho claro discreto)
           2) LABORATÓRIO & EXAMES (Roxo claro discreto + Gasometria em quadro cinza embaixo)
           3) CONDUTAS & PLANTONISTA (Direita — amplo espaço sem rolagem)
          ===================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-stretch flex-1">
 
         {/* QUADRO INFERIOR 1 (Esquerda): HEMODINÂMICA & CUIDADOS */}
-        <div className="bg-rose-50/45 p-3 rounded-xl border border-rose-200/80 shadow-2xs flex flex-col justify-between h-full text-left">
-          <div className="flex items-center gap-1.5 pb-1.5 mb-2 border-b border-rose-200/60 shrink-0">
-            <Stethoscope size={14} className="text-rose-600" />
+        <div className="bg-rose-50/45 p-4 rounded-xl border border-rose-200/80 shadow-2xs flex flex-col justify-between h-full min-h-[340px] text-left">
+          <div className="flex items-center gap-1.5 pb-2 mb-2.5 border-b border-rose-200/60 shrink-0">
+            <Stethoscope size={15} className="text-rose-600" />
             <span className="text-xs font-black text-rose-800 uppercase tracking-wider">Hemodinâmica & Cuidados</span>
           </div>
 
-          <div className="flex-1 flex flex-col justify-between gap-2">
+          <div className="flex-1 flex flex-col justify-between gap-2.5">
             {/* Linha 1: PAS | PAD | HGT (Máx / Mín) lado a lado sem setas de número */}
-            <div className="grid grid-cols-3 gap-2 bg-white/70 p-2 rounded-lg border border-rose-200/70">
+            <div className="grid grid-cols-3 gap-2.5 bg-white/70 p-2.5 rounded-lg border border-rose-200/70">
               <div>
-                <label className="block text-[9.5px] font-black text-rose-800 uppercase tracking-wider mb-1 text-center leading-none">PAS (Sistólica)</label>
+                <label className="block text-[10px] font-black text-rose-800 uppercase tracking-wider mb-1 text-center leading-none">PAS (Sistólica)</label>
                 <input
                   type="text"
                   placeholder="Ex: 110-140"
@@ -1395,12 +1398,12 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                     const combined = newPas || patient.checklistPad ? `${newPas || ''} x ${patient.checklistPad || ''}` : '';
                     updatePatient({ ...patient, checklistPas: newPas, checklistPasPad: combined });
                   }}
-                  className={`w-full px-2 py-1 bg-white border border-rose-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-2 py-1.5 bg-white border border-rose-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
 
               <div>
-                <label className="block text-[9.5px] font-black text-rose-800 uppercase tracking-wider mb-1 text-center leading-none">PAD (Diastólica)</label>
+                <label className="block text-[10px] font-black text-rose-800 uppercase tracking-wider mb-1 text-center leading-none">PAD (Diastólica)</label>
                 <input
                   type="text"
                   placeholder="Ex: 70-90"
@@ -1410,12 +1413,12 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                     const combined = patient.checklistPas || newPad ? `${patient.checklistPas || ''} x ${newPad || ''}` : '';
                     updatePatient({ ...patient, checklistPad: newPad, checklistPasPad: combined });
                   }}
-                  className={`w-full px-2 py-1 bg-white border border-rose-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-2 py-1.5 bg-white border border-rose-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
 
               <div>
-                <label className="block text-[9.5px] font-black text-rose-800 uppercase tracking-wider mb-1 text-center leading-none">HGT (Máx / Mín)</label>
+                <label className="block text-[10px] font-black text-rose-800 uppercase tracking-wider mb-1 text-center leading-none">HGT (Máx / Mín)</label>
                 <div className="flex items-center gap-1">
                   <input
                     type="text"
@@ -1423,7 +1426,7 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                     placeholder="Máx"
                     value={patient.checklistHgtMaior || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistHgtMaior: e.target.value })}
-                    className={`w-full px-1 py-1 bg-white border border-rose-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                    className={`w-full px-1 py-1.5 bg-white border border-rose-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                   />
                   <span className="text-xs text-slate-400 font-bold">/</span>
                   <input
@@ -1432,24 +1435,24 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                     placeholder="Mín"
                     value={patient.checklistHgtMenor || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistHgtMenor: e.target.value })}
-                    className={`w-full px-1 py-1 bg-white border border-rose-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                    className={`w-full px-1 py-1.5 bg-white border border-rose-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                   />
                 </div>
               </div>
             </div>
 
             {/* Linha 2: Febre + BH 24h + Diurese */}
-            <div className="grid grid-cols-12 gap-2 items-end">
+            <div className="grid grid-cols-12 gap-2.5 items-end">
               <div className="col-span-6">
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Febre / Temperatura</label>
-                <div className="flex items-center gap-1">
+                <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">Febre / Temperatura</label>
+                <div className="flex items-center gap-1.5">
                   <div className="flex bg-white p-0.5 rounded-lg border border-rose-200 shrink-0">
                     {['Sim', 'Não'].map((opt) => (
                       <button
                         key={opt}
                         type="button"
                         onClick={() => updatePatient({ ...patient, checklistFebre: patient.checklistFebre === opt ? '' : (opt as any) })}
-                        className={`px-2 py-1 rounded-md text-[9.5px] font-black transition-all ${
+                        className={`px-2.5 py-1.5 rounded-md text-[10px] font-black transition-all ${
                           patient.checklistFebre === opt
                             ? opt === 'Sim'
                               ? 'bg-blue-600 text-white shadow-2xs'
@@ -1466,66 +1469,66 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                     placeholder="Ex: 38.2 °C"
                     value={patient.checklistFebreTemp || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistFebreTemp: e.target.value })}
-                    className={`w-full px-2 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                    className={`w-full px-2.5 py-1.5 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                   />
                 </div>
               </div>
 
               <div className="col-span-3">
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">BH (24h)</label>
+                <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">BH (24h)</label>
                 <input
                   type="text"
                   placeholder="+450 ml"
                   value={patient.checklistBalançoHidrico || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistBalançoHidrico: e.target.value })}
-                  className={`w-full px-2 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  className={`w-full px-2.5 py-1.5 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                 />
               </div>
 
               <div className="col-span-3">
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Diurese</label>
+                <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">Diurese</label>
                 <input
                   type="text"
                   placeholder="1500 ml"
                   value={patient.checklistDiurese || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistDiurese: e.target.value })}
-                  className={`w-full px-2 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  className={`w-full px-2.5 py-1.5 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                 />
               </div>
             </div>
 
             {/* Linha 3: Acesso Venoso + Dieta */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Acesso Venoso (Local / Dia)</label>
-                <div className="flex items-center gap-1">
+                <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">Acesso Venoso (Local / Dia)</label>
+                <div className="flex items-center gap-1.5">
                   <input
                     type="text"
                     placeholder="Local (Ex: AVP MSE)"
                     value={patient.checklistAcessoLocal || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistAcessoLocal: e.target.value })}
-                    className={`flex-1 min-w-0 px-2 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                    className={`flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                   />
                   <input
                     type="number"
                     placeholder="Dia"
                     value={patient.checklistAcessoDia || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistAcessoDia: e.target.value })}
-                    className={`w-14 shrink-0 px-1.5 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                    className={`w-14 shrink-0 px-1.5 py-1.5 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Dieta</label>
-                <div className="flex items-center gap-1">
+                <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">Dieta</label>
+                <div className="flex items-center gap-1.5">
                   <div className="flex bg-white p-0.5 rounded-lg border border-rose-200 shrink-0">
                     {['Sim', 'Não'].map((opt) => (
                       <button
                         key={opt}
                         type="button"
                         onClick={() => updatePatient({ ...patient, checklistDieta: patient.checklistDieta === opt ? '' : (opt as any) })}
-                        className={`px-2 py-1 rounded-md text-[9.5px] font-black transition-all ${
+                        className={`px-2.5 py-1.5 rounded-md text-[10px] font-black transition-all ${
                           patient.checklistDieta === opt
                             ? opt === 'Sim'
                               ? 'bg-blue-600 text-white shadow-2xs'
@@ -1542,24 +1545,24 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                     placeholder="Tipo (SNE, Oral...)"
                     value={patient.checklistDietaTipo || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistDietaTipo: e.target.value })}
-                    className={`flex-1 min-w-0 px-2 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                    className={`flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                   />
                 </div>
               </div>
             </div>
 
             {/* Linha 4: Evacuações + Escaras */}
-            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-rose-200/60">
+            <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-rose-200/60">
               <div>
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Evacuações</label>
-                <div className="flex items-center gap-1">
+                <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">Evacuações</label>
+                <div className="flex items-center gap-1.5">
                   <div className="flex bg-white p-0.5 rounded-lg border border-rose-200 shrink-0">
                     {['Sim', 'Não'].map((opt) => (
                       <button
                         key={opt}
                         type="button"
                         onClick={() => updatePatient({ ...patient, checklistEvacuacoes: patient.checklistEvacuacoes === opt ? '' : (opt as any) })}
-                        className={`px-2 py-1 rounded-md text-[9.5px] font-black transition-all ${
+                        className={`px-2.5 py-1.5 rounded-md text-[10px] font-black transition-all ${
                           patient.checklistEvacuacoes === opt
                             ? opt === 'Sim'
                               ? 'bg-blue-600 text-white shadow-2xs'
@@ -1576,21 +1579,21 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                     placeholder="Aspecto / Freq."
                     value={patient.checklistEvacuacoesAspecto || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistEvacuacoesAspecto: e.target.value })}
-                    className={`flex-1 min-w-0 px-2 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                    className={`flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Escaras (Local / Grau)</label>
-                <div className="flex items-center gap-1">
+                <label className="block text-[10.5px] font-black text-slate-600 uppercase tracking-wider mb-1.5 leading-none">Escaras (Local / Grau)</label>
+                <div className="flex items-center gap-1.5">
                   <div className="flex bg-white p-0.5 rounded-lg border border-rose-200 shrink-0">
                     {['Sim', 'Não'].map((opt) => (
                       <button
                         key={opt}
                         type="button"
                         onClick={() => updatePatient({ ...patient, checklistEscaras: patient.checklistEscaras === opt ? '' : (opt as any) })}
-                        className={`px-2 py-1 rounded-md text-[9.5px] font-black transition-all ${
+                        className={`px-2.5 py-1.5 rounded-md text-[10px] font-black transition-all ${
                           patient.checklistEscaras === opt
                             ? opt === 'Sim'
                               ? 'bg-blue-600 text-white shadow-2xs'
@@ -1607,14 +1610,14 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                     placeholder="Local"
                     value={patient.checklistEscarasLocal || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistEscarasLocal: e.target.value })}
-                    className={`w-1/2 min-w-0 px-1.5 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                    className={`w-1/2 min-w-0 px-2 py-1.5 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                   />
                   <input
                     type="text"
                     placeholder="Grau"
                     value={patient.checklistEscarasAspecto || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistEscarasAspecto: e.target.value })}
-                    className={`w-1/2 min-w-0 px-1.5 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                    className={`w-1/2 min-w-0 px-2 py-1.5 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                   />
                 </div>
               </div>
@@ -1623,207 +1626,207 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
         </div>
 
         {/* QUADRO INFERIOR 2 (Centro): LABORATÓRIO & EXAMES (Roxo claro discreto + Gasometria em quadro cinza na linha inferior) */}
-        <div className="bg-purple-50/45 p-3 rounded-xl border border-purple-200/80 shadow-2xs flex flex-col justify-between h-full text-left">
-          <div className="flex items-center gap-1.5 pb-1.5 mb-2 border-b border-purple-200/60 shrink-0">
-            <Droplets size={14} className="text-purple-600" />
+        <div className="bg-purple-50/45 p-4 rounded-xl border border-purple-200/80 shadow-2xs flex flex-col justify-between h-full min-h-[340px] text-left">
+          <div className="flex items-center gap-1.5 pb-2 mb-2.5 border-b border-purple-200/60 shrink-0">
+            <Droplets size={15} className="text-purple-600" />
             <span className="text-xs font-black text-purple-800 uppercase tracking-wider">Laboratório & Exames</span>
           </div>
 
-          <div className="flex-1 flex flex-col justify-between gap-2">
+          <div className="flex-1 flex flex-col justify-between gap-2.5">
             {/* Linha 1: Hemograma (Hb, Ht, Plaq, Leuco, Bast) + INR em 1 linha, sem placeholder */}
-            <div className="grid grid-cols-6 gap-1.5">
+            <div className="grid grid-cols-6 gap-2">
               <div>
-                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Hb</label>
+                <label className="block text-[10px] font-black text-purple-900 text-center mb-1">Hb</label>
                 <input
                   type="text"
                   value={patient.checklistHb || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistHb: e.target.value })}
-                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-1.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
               <div>
-                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Ht</label>
+                <label className="block text-[10px] font-black text-purple-900 text-center mb-1">Ht</label>
                 <input
                   type="text"
                   value={patient.checklistHt || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistHt: e.target.value })}
-                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-1.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
               <div>
-                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Plaq</label>
+                <label className="block text-[10px] font-black text-purple-900 text-center mb-1">Plaq</label>
                 <input
                   type="text"
                   value={patient.checklistPlaquetas || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistPlaquetas: e.target.value })}
-                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-1.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
               <div>
-                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Leuco</label>
+                <label className="block text-[10px] font-black text-purple-900 text-center mb-1">Leuco</label>
                 <input
                   type="text"
                   value={patient.checklistLeucograma || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistLeucograma: e.target.value })}
-                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-1.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
               <div>
-                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Bast</label>
+                <label className="block text-[10px] font-black text-purple-900 text-center mb-1">Bast</label>
                 <input
                   type="text"
                   value={patient.checklistBastoes || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistBastoes: e.target.value })}
-                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-1.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
               <div>
-                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">INR</label>
+                <label className="block text-[10px] font-black text-purple-900 text-center mb-1">INR</label>
                 <input
                   type="text"
                   value={patient.checklistInr || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistInr: e.target.value })}
-                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-1.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
             </div>
 
             {/* Linha 2: Bioquímica (Na, K, Ureia, Creat, PCR, Trop) em 1 linha, sem placeholder */}
-            <div className="grid grid-cols-6 gap-1.5">
+            <div className="grid grid-cols-6 gap-2">
               <div>
-                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Na</label>
+                <label className="block text-[10px] font-black text-purple-900 text-center mb-1">Na</label>
                 <input
                   type="text"
                   value={patient.checklistSodio || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistSodio: e.target.value })}
-                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-1.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
               <div>
-                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">K</label>
+                <label className="block text-[10px] font-black text-purple-900 text-center mb-1">K</label>
                 <input
                   type="text"
                   value={patient.checklistPotassio || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistPotassio: e.target.value })}
-                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-1.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
               <div>
-                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Ureia</label>
+                <label className="block text-[10px] font-black text-purple-900 text-center mb-1">Ureia</label>
                 <input
                   type="text"
                   value={patient.checklistUreia || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistUreia: e.target.value })}
-                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-1.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
               <div>
-                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Creat</label>
+                <label className="block text-[10px] font-black text-purple-900 text-center mb-1">Creat</label>
                 <input
                   type="text"
                   value={patient.checklistCreatinina || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistCreatinina: e.target.value })}
-                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-1.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
               <div>
-                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">PCR</label>
+                <label className="block text-[10px] font-black text-purple-900 text-center mb-1">PCR</label>
                 <input
                   type="text"
                   value={patient.checklistPcr || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistPcr: e.target.value })}
-                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-1.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
               <div>
-                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Trop</label>
+                <label className="block text-[10px] font-black text-purple-900 text-center mb-1">Trop</label>
                 <input
                   type="text"
                   value={patient.checklistTroponina || ''}
                   onChange={(e) => updatePatient({ ...patient, checklistTroponina: e.target.value })}
-                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  className={`w-full px-1.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
             </div>
 
             {/* Linha 3: Outros Exames ocupando toda a largura */}
             <div>
-              <label className="block text-[10px] font-black text-purple-900 uppercase tracking-wider mb-1 leading-none">Outros Exames</label>
+              <label className="block text-[10.5px] font-black text-purple-900 uppercase tracking-wider mb-1.5 leading-none">Outros Exames</label>
               <input
                 type="text"
                 value={patient.checklistBioquimicaOutros || ''}
                 onChange={(e) => updatePatient({ ...patient, checklistBioquimicaOutros: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                className={`w-full px-3 py-2 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
               />
             </div>
 
             {/* Linha 4 (Inferior): GASOMETRIA ARTERIAL em quadro cinza destacado */}
-            <div className="bg-slate-200/85 p-2 rounded-lg border border-slate-300 shadow-2xs">
-              <span className="block text-[10px] font-black text-slate-800 uppercase tracking-wider mb-1.5 leading-none">
+            <div className="bg-slate-200/85 p-2.5 rounded-lg border border-slate-300 shadow-2xs">
+              <span className="block text-[10.5px] font-black text-slate-800 uppercase tracking-wider mb-1.5 leading-none">
                 Gasometria Arterial
               </span>
-              <div className="grid grid-cols-7 gap-1">
+              <div className="grid grid-cols-7 gap-1.5">
                 <div>
-                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">pH</label>
+                  <label className="block text-[9.5px] font-black text-slate-700 text-center mb-0.5">pH</label>
                   <input
                     type="text"
                     value={patient.checklistPh || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistPh: e.target.value })}
-                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                    className={`w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">PaO2</label>
+                  <label className="block text-[9.5px] font-black text-slate-700 text-center mb-0.5">PaO2</label>
                   <input
                     type="text"
                     value={patient.checklistPao2 || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistPao2: e.target.value })}
-                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                    className={`w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">PaCO2</label>
+                  <label className="block text-[9.5px] font-black text-slate-700 text-center mb-0.5">PaCO2</label>
                   <input
                     type="text"
                     value={patient.checklistPaco2 || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistPaco2: e.target.value })}
-                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                    className={`w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">HCO3</label>
+                  <label className="block text-[9.5px] font-black text-slate-700 text-center mb-0.5">HCO3</label>
                   <input
                     type="text"
                     value={patient.checklistHco3 || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistHco3: e.target.value })}
-                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                    className={`w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">SaO2</label>
+                  <label className="block text-[9.5px] font-black text-slate-700 text-center mb-0.5">SaO2</label>
                   <input
                     type="text"
                     value={patient.checklistSao2 || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistSao2: e.target.value })}
-                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                    className={`w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">P/F</label>
+                  <label className="block text-[9.5px] font-black text-slate-700 text-center mb-0.5">P/F</label>
                   <input
                     type="text"
                     value={patient.checklistPf || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistPf: e.target.value })}
-                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                    className={`w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">S/F</label>
+                  <label className="block text-[9.5px] font-black text-slate-700 text-center mb-0.5">S/F</label>
                   <input
                     type="text"
                     value={patient.checklistSf || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistSf: e.target.value })}
-                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                    className={`w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
                   />
                 </div>
               </div>
@@ -1832,48 +1835,48 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
         </div>
 
         {/* QUADRO INFERIOR 3 (Direita): CONDUTAS & PLANTONISTA EM DESTAQUE */}
-        <div className="bg-amber-50/20 p-3 rounded-xl border-2 border-amber-300/80 shadow-2xs flex flex-col justify-between h-full text-left">
-          <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-amber-200/80 shrink-0">
+        <div className="bg-amber-50/20 p-4 rounded-xl border-2 border-amber-300/80 shadow-2xs flex flex-col justify-between h-full min-h-[340px] text-left">
+          <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-amber-200/80 shrink-0">
             <div className="flex items-center gap-1.5">
-              <AlertCircle size={14} className="text-amber-700" />
+              <AlertCircle size={15} className="text-amber-700" />
               <span className="text-xs font-black text-amber-800 uppercase tracking-wider">Condutas & Plantonista</span>
             </div>
-            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200">
+            <span className="text-[10.5px] font-black uppercase px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200">
               Plano do Dia
             </span>
           </div>
 
-          <div className="flex-1 flex flex-col justify-between gap-2">
+          <div className="flex-1 flex flex-col justify-between gap-2.5">
             <div className="flex-1 flex flex-col">
               <textarea
                 placeholder="Descreva pendências, intercorrências e condutas do dia..."
                 value={patient.checklistCondutas || ''}
                 onChange={(e) => updatePatient({ ...patient, checklistCondutas: e.target.value })}
-                rows={7}
-                className={`w-full flex-1 min-h-[165px] p-2.5 bg-white border border-amber-300 rounded-lg text-xs leading-relaxed focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 resize-none custom-scrollbar ${theme.ringColor}`}
+                rows={8}
+                className={`w-full flex-1 min-h-[210px] p-3 bg-white border border-amber-300 rounded-lg text-xs leading-relaxed focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 resize-none custom-scrollbar ${theme.ringColor}`}
               />
             </div>
 
             {/* Rodapé em 1 linha: Médico Plantonista + Limpar Coluna */}
-            <div className="pt-1.5 border-t border-amber-200/70">
+            <div className="pt-2 border-t border-amber-200/70">
               {!isConfirmingClearColumn ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black text-amber-900 uppercase tracking-wider shrink-0">Plantonista:</span>
+                  <span className="text-[10.5px] font-black text-amber-900 uppercase tracking-wider shrink-0">Plantonista:</span>
                   <input
                     type="text"
                     placeholder="Dr(a). Nome do Médico"
                     value={patient.checklistMedicoPlantonista || ''}
                     onChange={(e) => updatePatient({ ...patient, checklistMedicoPlantonista: e.target.value })}
-                    className={`flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-amber-300 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 ${theme.ringColor}`}
+                    className={`flex-1 min-w-0 px-3 py-2 bg-white border border-amber-300 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 ${theme.ringColor}`}
                   />
                   <button
                     type="button"
                     onClick={() => setIsConfirmingClearColumn(true)}
                     title={`Limpar dados da Coluna ${activeIndex + 1}`}
-                    className="py-1.5 px-2.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-1 shrink-0 cursor-pointer active:scale-95"
+                    className="py-2 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-[10.5px] font-black uppercase transition-all flex items-center gap-1 shrink-0 cursor-pointer active:scale-95"
                   >
-                    <Trash2 size={12} className="text-red-600 shrink-0" />
-                    <span>Limpar Col {activeIndex + 1}</span>
+                    <Trash2 size={13} className="text-red-600 shrink-0" />
+                    <span>Limpar Coluna {activeIndex + 1}</span>
                   </button>
                 </div>
               ) : (

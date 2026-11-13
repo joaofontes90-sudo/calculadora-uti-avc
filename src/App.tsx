@@ -2981,34 +2981,34 @@ const PatientCard = ({
 
       {/* Fullscreen Modal Portal */}
       {(activeTab === 'clinical' || activeTab === 'checklist') && createPortal(
-        <div className="fixed inset-0 z-[150] bg-slate-900/65 backdrop-blur-md flex items-center justify-center p-2 md:p-3 overflow-hidden">
+        <div className="fixed inset-0 z-[150] bg-slate-900/65 backdrop-blur-md flex items-center justify-center p-1.5 md:p-2 overflow-hidden">
           <motion.div 
             initial={{ opacity: 0, y: 15, scale: 0.99 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="bg-slate-100 w-full h-full max-w-[97vw] rounded-2xl shadow-2xl flex flex-col overflow-hidden text-left border border-slate-200"
+            className="bg-slate-100 w-full h-full max-w-[98vw] rounded-2xl shadow-2xl flex flex-col overflow-hidden text-left border border-slate-200"
           >
-            {/* Compact Single-Line Modal Header + Tab Switcher */}
-            <div className="bg-white px-4 py-2 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-sm ${
+            {/* Modal Header + Tab Switcher (Aumentado verticalmente e fontes maiores) */}
+            <div className="bg-white px-5 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
+              <div className="flex flex-wrap items-center gap-3.5">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-base shadow-sm ${
                   patient.gender === 'Masculino' ? 'bg-blue-600' : 
                   patient.gender === 'Feminino' ? 'bg-pink-600' : 
                   'bg-slate-600'
                 }`}>
                   {patient.id}
                 </div>
-                <div className="flex items-center gap-2">
-                  <h2 className="font-black text-slate-800 text-sm md:text-base uppercase tracking-tight">Leito {patient.id} — {patient.name || 'Paciente sem nome'}</h2>
-                  {patient.age && <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded-md text-[11px] font-bold text-slate-600">{patient.age} anos</span>}
-                  {patient.weight && <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded-md text-[11px] font-bold text-slate-600">{patient.weight} kg</span>}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h2 className="font-black text-slate-800 text-base md:text-lg uppercase tracking-tight">Leito {patient.id} — {patient.name || 'Paciente sem nome'}</h2>
+                  {patient.age && <span className="px-3 py-1 bg-slate-100 border border-slate-300 rounded-lg text-sm font-black text-slate-700">{patient.age} anos</span>}
+                  {patient.weight && <span className="px-3 py-1 bg-slate-100 border border-slate-300 rounded-lg text-sm font-black text-slate-700">{patient.weight} kg</span>}
                 </div>
 
                 {/* Integrated Tab Switcher */}
-                <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 ml-2">
+                <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 ml-2">
                   <button
                     type="button"
                     onClick={() => setActiveTab('clinical')}
-                    className={`px-3 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all ${
+                    className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
                       activeTab === 'clinical'
                         ? 'bg-white text-blue-600 shadow-xs border border-slate-200/80'
                         : 'text-slate-500 hover:text-slate-800'
@@ -3019,7 +3019,7 @@ const PatientCard = ({
                   <button
                     type="button"
                     onClick={() => setActiveTab('checklist')}
-                    className={`px-3 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all ${
+                    className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
                       activeTab === 'checklist'
                         ? 'bg-blue-600 text-white shadow-xs'
                         : 'text-slate-500 hover:text-slate-800'
@@ -3030,44 +3030,44 @@ const PatientCard = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <button 
                   onClick={handlePrint}
-                  className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100 transition-all flex items-center gap-1.5 font-black text-[11px] uppercase shadow-2xs tracking-wider"
+                  className="px-3.5 py-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 transition-all flex items-center gap-1.5 font-black text-xs uppercase shadow-2xs tracking-wider"
                   title="Imprimir Checklist"
                 >
-                  <Printer size={14} />
+                  <Printer size={15} />
                   <span>Imprimir Checklist</span>
                 </button>
                 <button 
                   onClick={() => showExamsModal?.(patient)}
-                  className="px-3 py-1.5 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-100 transition-all flex items-center gap-1.5 font-black text-[11px] uppercase shadow-2xs tracking-wider"
+                  className="px-3.5 py-2 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200 transition-all flex items-center gap-1.5 font-black text-xs uppercase shadow-2xs tracking-wider"
                   title="Imprimir Exames"
                 >
-                  <ClipboardList size={14} />
+                  <ClipboardList size={15} />
                   <span>Exames</span>
                 </button>
                 <button 
                   onClick={() => onPrintGasometria?.(patient)}
-                  className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100 transition-all flex items-center gap-1.5 font-black text-[11px] uppercase shadow-2xs tracking-wider"
+                  className="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 transition-all flex items-center gap-1.5 font-black text-xs uppercase shadow-2xs tracking-wider"
                   title="Imprimir Gasometria"
                 >
-                  <Printer size={14} />
+                  <Printer size={15} />
                   <span>Gasometria</span>
                 </button>
                 <button 
                   onClick={() => setActiveTab('infusions')}
-                  className="px-3.5 py-1.5 rounded-xl bg-slate-800 text-white hover:bg-slate-900 border border-slate-800 transition-all flex items-center gap-1.5 font-black text-[11px] uppercase shadow-sm tracking-wider"
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-900 border border-slate-800 transition-all flex items-center gap-1.5 font-black text-xs uppercase shadow-sm tracking-wider"
                   title="Salvar e Fechar"
                 >
-                  <Check size={14} />
+                  <Check size={15} />
                   <span>Salvar e Fechar</span>
                 </button>
               </div>
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-2.5 bg-slate-100 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-3 bg-slate-100 custom-scrollbar flex flex-col">
               {activeTab === 'clinical' ? (
                 <ClinicalForm 
                   patient={patient} 

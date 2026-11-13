@@ -530,102 +530,134 @@ export const ClinicalForm: React.FC<ClinicalFormProps> = ({
         </div>
       </div>
 
-      {/* SEÇÃO 2: ICTUS E TROMBÓLISE */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200/60 space-y-4 shadow-sm text-left">
-        <div className="flex items-center gap-1.5 pb-2 border-b border-slate-100">
-          <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Ictus & Trombólise</span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Data do Ictus</label>
-            <input
-              type="text"
-              placeholder="DD/MM/AA"
-              maxLength={8}
-              value={patient.dataIctus || ''}
-              onChange={(e) => updatePatient({ ...patient, dataIctus: handleDateMask(e.target.value) })}
-              className={`w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-            />
+      {/* SEÇÃO 2: ICTUS E TROMBÓLISE + ECG ABAIXO */}
+      <div className="space-y-6">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/60 space-y-4 shadow-sm text-left">
+          <div className="flex items-center gap-1.5 pb-2 border-b border-slate-100">
+            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Ictus & Trombólise</span>
           </div>
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Hora do Ictus</label>
-            <input
-              type="text"
-              placeholder="Ex: 14:30"
-              value={patient.horaIctus || ''}
-              onChange={(e) => updatePatient({ ...patient, horaIctus: e.target.value })}
-              className={`w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-            />
-          </div>
-        </div>
 
-        <div>
-          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Duração dos Sintomas</label>
-          <div className="grid grid-cols-3 gap-1.5">
-            {['< 10 min', '10-59 min', '> 60 min'].map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => updatePatient({ ...patient, duracaoSintomas: patient.duracaoSintomas === opt ? '' : (opt as any) })}
-                className={`py-2 rounded-xl text-[10px] font-black border transition-all ${
-                  patient.duracaoSintomas === opt
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                    : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                }`}
-              >
-                {opt}
-              </button>
-            ))}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Data do Ictus</label>
+              <input
+                type="text"
+                placeholder="DD/MM/AA"
+                maxLength={8}
+                value={patient.dataIctus || ''}
+                onChange={(e) => updatePatient({ ...patient, dataIctus: handleDateMask(e.target.value) })}
+                className={`w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Hora do Ictus</label>
+              <input
+                type="text"
+                placeholder="Ex: 14:30"
+                value={patient.horaIctus || ''}
+                onChange={(e) => updatePatient({ ...patient, horaIctus: e.target.value })}
+                className={`w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Trombólise</label>
-            <div className="flex gap-1.5">
-              {['Sim', 'Não'].map((opt) => (
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Duração dos Sintomas</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {['< 10 min', '10-59 min', '> 60 min'].map((opt) => (
                 <button
                   key={opt}
                   type="button"
-                  onClick={() => updatePatient({ ...patient, trombolise: patient.trombolise === opt ? '' : (opt as any) })}
-                  className={`flex-1 py-2 rounded-xl text-[10px] font-black border transition-all ${
-                    patient.trombolise === opt
+                  onClick={() => updatePatient({ ...patient, duracaoSintomas: patient.duracaoSintomas === opt ? '' : (opt as any) })}
+                  className={`py-2 rounded-xl text-[10px] font-black border transition-all ${
+                    patient.duracaoSintomas === opt
                       ? 'bg-blue-600 text-white border-blue-600 shadow-md'
                       : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
                   }`}
                 >
-                  {opt.toUpperCase()}
+                  {opt}
                 </button>
               ))}
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Trombólise</label>
+              <div className="flex gap-1.5">
+                {['Sim', 'Não'].map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => updatePatient({ ...patient, trombolise: patient.trombolise === opt ? '' : (opt as any) })}
+                    className={`flex-1 py-2 rounded-xl text-[10px] font-black border transition-all ${
+                      patient.trombolise === opt
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                        : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                    }`}
+                  >
+                    {opt.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Data/Hora</label>
+              <input
+                type="text"
+                placeholder="Ex: 12/11 15:45"
+                value={patient.tromboliseDataHora || ''}
+                disabled={patient.trombolise !== 'Sim'}
+                onChange={(e) => updatePatient({ ...patient, tromboliseDataHora: e.target.value })}
+                className={`w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold ${
+                  patient.trombolise === 'Sim'
+                    ? `bg-slate-50 border-slate-200 text-slate-700 ${theme.ringColor}`
+                    : 'bg-slate-100 border-slate-100 text-slate-400 cursor-not-allowed'
+                }`}
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Data/Hora</label>
-            <input
-              type="text"
-              placeholder="Ex: 12/11 15:45"
-              value={patient.tromboliseDataHora || ''}
-              disabled={patient.trombolise !== 'Sim'}
-              onChange={(e) => updatePatient({ ...patient, tromboliseDataHora: e.target.value })}
-              className={`w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold ${
-                patient.trombolise === 'Sim'
-                  ? `bg-slate-50 border-slate-200 text-slate-700 ${theme.ringColor}`
-                  : 'bg-slate-100 border-slate-100 text-slate-400 cursor-not-allowed'
-              }`}
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Comorbidades</label>
+            <textarea
+              placeholder="Ex: Hipertensão, Diabetes Melitus..."
+              value={patient.comorbidades || ''}
+              onChange={(e) => updatePatient({ ...patient, comorbidades: e.target.value })}
+              rows={3}
+              className={`w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 custom-scrollbar ${theme.ringColor}`}
             />
           </div>
         </div>
 
-        <div>
-          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Comorbidades</label>
-          <textarea
-            placeholder="Ex: Hipertensão, Diabetes Melitus..."
-            value={patient.comorbidades || ''}
-            onChange={(e) => updatePatient({ ...patient, comorbidades: e.target.value })}
-            rows={3}
-            className={`w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 custom-scrollbar ${theme.ringColor}`}
-          />
+        {/* QUADRO DE ECG (ABAIXO DE ICTUS & TROMBÓLISE) */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/60 space-y-3 shadow-sm text-left">
+          <div className="flex items-center gap-1.5 pb-2 border-b border-slate-100">
+            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">ECG</span>
+          </div>
+          <div className="space-y-2.5">
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Data do ECG</label>
+              <input
+                type="text"
+                placeholder="DD/MM/AA"
+                maxLength={8}
+                value={patient.ecgData || ''}
+                onChange={(e) => updatePatient({ ...patient, ecgData: handleDateMask(e.target.value) })}
+                className={`w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 leading-none">Descrição do Laudo</label>
+              <textarea
+                placeholder="Descrição do laudo..."
+                value={patient.ecgLaudo || ''}
+                onChange={(e) => updatePatient({ ...patient, ecgLaudo: e.target.value })}
+                rows={2}
+                className={`w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 custom-scrollbar ${theme.ringColor}`}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -739,28 +771,6 @@ export const ClinicalForm: React.FC<ClinicalFormProps> = ({
               ))}
             </div>
           )}
-        </div>
-
-        {/* ECG */}
-        <div className="p-3 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-2">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">ECG</span>
-          <div className="space-y-2">
-            <input
-              type="text"
-              placeholder="DD/MM/AA"
-              maxLength={8}
-              value={patient.ecgData || ''}
-              onChange={(e) => updatePatient({ ...patient, ecgData: handleDateMask(e.target.value) })}
-              className={`w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-            />
-            <textarea
-              placeholder="Descrição do laudo..."
-              value={patient.ecgLaudo || ''}
-              onChange={(e) => updatePatient({ ...patient, ecgLaudo: e.target.value })}
-              rows={2}
-              className={`w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 custom-scrollbar ${theme.ringColor}`}
-            />
-          </div>
         </div>
       </div>
     </div>
