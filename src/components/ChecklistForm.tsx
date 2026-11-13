@@ -744,47 +744,43 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
   };
 
   return (
-    <div className="space-y-3.5">
-      {/* 6-Column Selector Dashboard with Pagination */}
-      <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 shadow-sm">
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-100">
-          <div>
-            <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight">
-              Colunas de Checklist Diário (6 Colunas por Página)
-            </h3>
-            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
-              Preencha as colunas do ciclo. Ao completar as 6 primeiras (1-6), avance para a próxima página.
-            </p>
-          </div>
+    <div className="space-y-2.5">
+      {/* Barra Compacta em 1 Linha: Paginação + 6 Colunas de Evolução */}
+      <div className="bg-white px-3 py-2 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <span className="text-xs font-black text-slate-800 uppercase tracking-tight">
+            Checklist Diário UAVC
+          </span>
 
-          {/* Pagination Controls */}
-          <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-center">
+          {/* Controles de Paginação */}
+          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
             <button
               type="button"
               disabled={currentPage <= 1}
               onClick={handlePrevPage}
-              className="px-2.5 py-1.5 rounded-xl text-[9.5px] font-black uppercase tracking-wider transition-all flex items-center gap-1 border bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-0.5 bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/80 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              Página Anterior
+              <ChevronLeft className="w-3 h-3" />
+              <span>Ant</span>
             </button>
 
-            <span className="px-3 py-1.5 rounded-xl text-[10px] font-black text-blue-700 bg-blue-50 border border-blue-100">
-              Página {currentPage} de {totalPages} (Cols. {startIndex + 1}–{startIndex + 6})
+            <span className="px-2.5 py-1 rounded-md text-[10px] font-black text-blue-700 bg-blue-50 border border-blue-200/60">
+              Folha {currentPage}/{totalPages} (Cols {startIndex + 1}–{startIndex + 6})
             </span>
 
             <button
               type="button"
               onClick={handleNextPage}
-              className="px-2.5 py-1.5 rounded-xl text-[9.5px] font-black uppercase tracking-wider transition-all flex items-center gap-1 border bg-blue-600 border-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200"
+              className="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-0.5 bg-blue-600 text-white hover:bg-blue-700 shadow-2xs"
             >
-              Próxima Página
-              <ChevronRight className="w-3.5 h-3.5" />
+              <span>Próx</span>
+              <ChevronRight className="w-3 h-3" />
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 mt-2.5">
+        {/* 6 Pílulas de Coluna Horizontais */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 flex-1 max-w-4xl">
           {visibleChecklists.map((list, colOffset) => {
             const realIdx = startIndex + colOffset;
             const isActive = realIdx === activeIndex;
@@ -794,1069 +790,1120 @@ export const ChecklistForm: React.FC<ChecklistFormProps> = ({
                 key={realIdx}
                 type="button"
                 onClick={() => setActiveIndex(realIdx)}
-                className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between relative overflow-hidden group ${
-                  isActive 
-                    ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-100' 
+                className={`py-1.5 px-2.5 rounded-lg border text-left transition-all flex items-center justify-between gap-1 cursor-pointer ${
+                  isActive
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm ring-2 ring-blue-300/60'
                     : isFilled
-                      ? 'bg-emerald-50/70 border-emerald-200 hover:border-emerald-300 text-emerald-800'
-                      : 'bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-500'
+                      ? 'bg-emerald-50/90 border-emerald-300 hover:border-emerald-400 text-emerald-900'
+                      : 'bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-600'
                 }`}
               >
-                {/* Active Indicator bar */}
-                {isActive && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-blue-300" />
-                )}
-                <div className="flex justify-between items-center w-full">
-                  <span className={`text-[9px] font-black uppercase tracking-wider ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>
-                    Coluna {realIdx + 1}
-                  </span>
-                  {isFilled && !isActive && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  )}
-                </div>
-                <div className="mt-1">
-                  <span className="text-[10px] font-black leading-tight block">
-                    {list.checklistData || 'Vazia'}
-                  </span>
-                  <span className={`text-[8px] font-bold uppercase block mt-0.5 ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
-                    {isFilled ? 'Preenchida' : 'Aguardando'}
-                  </span>
-                </div>
+                <span className={`text-[10px] font-black uppercase tracking-tight ${isActive ? 'text-white' : isFilled ? 'text-emerald-800' : 'text-slate-500'}`}>
+                  Col {realIdx + 1}
+                </span>
+                <span className={`text-[10px] font-bold truncate ${isActive ? 'text-blue-100' : isFilled ? 'text-emerald-700' : 'text-slate-400'}`}>
+                  {list.checklistData || 'Vazia'}
+                </span>
               </button>
             );
           })}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 items-start">
-      
-      {/* COLUNA 1: NEUROLOGIA, TERAPÊUTICA & CONDUTAS */}
-      <div className="space-y-3">
-        {/* CARD 1: AVALIAÇÃO NEUROLÓGICA & GERAL */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
-          <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
-            <Activity size={14} className="text-blue-600" />
-            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Avaliação Neurológica</span>
+      {/* =====================================================================
+          LINHA SUPERIOR: 3 QUADROS DE MESMO TAMANHO HORIZONTAL E VERTICAL
+          1) AVALIAÇÃO NEUROLÓGICA (Azul claro discreto)
+          2) TERAPÊUTICA & MEDICAÇÕES (Verde claro discreto)
+          3) SUPORTE VENTILATÓRIO & DROGAS
+         ===================================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5 items-stretch">
+
+        {/* QUADRO SUPERIOR 1: AVALIAÇÃO NEUROLÓGICA */}
+        <div className="bg-blue-50/45 p-3 rounded-xl border border-blue-200/80 shadow-2xs flex flex-col justify-between h-full text-left">
+          <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-blue-200/60 shrink-0">
+            <div className="flex items-center gap-1.5">
+              <Activity size={14} className="text-blue-600" />
+              <span className="text-xs font-black text-blue-800 uppercase tracking-wider">Avaliação Neurológica</span>
+            </div>
+            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-white text-blue-700 border border-blue-200">
+              Coluna {activeIndex + 1}
+            </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Data do Checklist</label>
-              <input
-                type="text"
-                placeholder="DD/MM/AA"
-                maxLength={8}
-                value={patient.checklistData || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistData: handleDateMask(e.target.value) })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">NIHSS Atual</label>
-              <input
-                type="number"
-                placeholder="Pontos"
-                value={patient.checklistNihssAtual || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistNihssAtual: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Pupila</label>
-              <input
-                type="text"
-                placeholder="Isocórica / Fotorreagente..."
-                value={patient.checklistPup || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistPup: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                  {patient.checklistGlasgow?.startsWith('RASS') ? 'RASS' : 'Glasgow'}
-                </label>
-                <div className="flex gap-0.5 bg-slate-100 p-0.5 rounded-md border border-slate-200">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (patient.checklistGlasgow?.startsWith('RASS')) {
-                        updatePatient({ ...patient, checklistGlasgow: '' });
-                      }
-                    }}
-                    className={`px-1.5 py-0.2 text-[8px] font-black rounded transition-all ${
-                      !patient.checklistGlasgow?.startsWith('RASS')
-                        ? 'bg-blue-600 text-white'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    Glasgow
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!patient.checklistGlasgow?.startsWith('RASS')) {
-                        updatePatient({ ...patient, checklistGlasgow: 'RASS: 0' });
-                      }
-                    }}
-                    className={`px-1.5 py-0.2 text-[8px] font-black rounded transition-all ${
-                      patient.checklistGlasgow?.startsWith('RASS')
-                        ? 'bg-blue-600 text-white'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    RASS
-                  </button>
-                </div>
+          <div className="flex-1 flex flex-col justify-between gap-2">
+            {/* Linha 1: Data do Checklist + NIHSS Atual + Glasgow/RASS */}
+            <div className="grid grid-cols-12 gap-2 items-end">
+              <div className="col-span-4">
+                <label className="block text-[10px] font-black text-blue-800 uppercase tracking-wider mb-1 leading-none">Data Check</label>
+                <input
+                  type="text"
+                  placeholder="DD/MM/AA"
+                  maxLength={8}
+                  value={patient.checklistData || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistData: handleDateMask(e.target.value) })}
+                  className={`w-full px-2 py-1.5 bg-white border border-blue-300 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-black text-slate-800 text-center ${theme.ringColor}`}
+                />
               </div>
 
-              {!patient.checklistGlasgow?.startsWith('RASS') ? (
+              <div className="col-span-3">
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">NIHSS Atual</label>
                 <input
                   type="number"
-                  placeholder="Valor (3-15)"
-                  min="3"
-                  max="15"
-                  value={patient.checklistGlasgow || ''}
-                  onChange={(e) => updatePatient({ ...patient, checklistGlasgow: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  placeholder="Pontos"
+                  value={patient.checklistNihssAtual || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistNihssAtual: e.target.value })}
+                  className={`w-full px-2 py-1.5 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
-              ) : (
-                <select
-                  value={patient.checklistGlasgow || 'RASS: 0'}
-                  onChange={(e) => updatePatient({ ...patient, checklistGlasgow: e.target.value })}
-                  className={`w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-                >
-                  <option value="RASS: +4">RASS +4 (Combativo)</option>
-                  <option value="RASS: +3">RASS +3 (Muito Agitado)</option>
-                  <option value="RASS: +2">RASS +2 (Agitado)</option>
-                  <option value="RASS: +1">RASS +1 (Inquieto)</option>
-                  <option value="RASS: 0">RASS 0 (Alerta e Calmo)</option>
-                  <option value="RASS: -1">RASS -1 (Sonolento)</option>
-                  <option value="RASS: -2">RASS -2 (Sedação Leve)</option>
-                  <option value="RASS: -3">RASS -3 (Sedação Moderada)</option>
-                  <option value="RASS: -4">RASS -4 (Sedação Profunda)</option>
-                  <option value="RASS: -5">RASS -5 (Indespertável)</option>
-                </select>
-              )}
-            </div>
-          </div>
+              </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Respiração</label>
-              <input
-                type="text"
-                placeholder="Sem alterações"
-                value={patient.checklistResp || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistResp: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
+              <div className="col-span-5">
+                <div className="flex items-center justify-end mb-1">
+                  <div className="flex gap-1 bg-white p-0.5 rounded-lg border border-blue-200 w-full">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (patient.checklistGlasgow?.startsWith('RASS')) {
+                          updatePatient({ ...patient, checklistGlasgow: '' });
+                        }
+                      }}
+                      className={`flex-1 px-2 py-0.5 text-[10px] font-black rounded-md transition-all cursor-pointer ${
+                        !patient.checklistGlasgow?.startsWith('RASS')
+                          ? 'bg-blue-600 text-white shadow-2xs'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      Glasgow
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!patient.checklistGlasgow?.startsWith('RASS')) {
+                          updatePatient({ ...patient, checklistGlasgow: 'RASS: 0' });
+                        }
+                      }}
+                      className={`flex-1 px-2 py-0.5 text-[10px] font-black rounded-md transition-all cursor-pointer ${
+                        patient.checklistGlasgow?.startsWith('RASS')
+                          ? 'bg-blue-600 text-white shadow-2xs'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      RASS
+                    </button>
+                  </div>
+                </div>
+
+                {!patient.checklistGlasgow?.startsWith('RASS') ? (
+                  <input
+                    type="number"
+                    placeholder="3-15"
+                    min="3"
+                    max="15"
+                    value={patient.checklistGlasgow || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistGlasgow: e.target.value })}
+                    className={`w-full px-2 py-1.5 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  />
+                ) : (
+                  <select
+                    value={patient.checklistGlasgow || 'RASS: 0'}
+                    onChange={(e) => updatePatient({ ...patient, checklistGlasgow: e.target.value })}
+                    className={`w-full px-1.5 py-1.5 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  >
+                    <option value="RASS: +4">RASS +4</option>
+                    <option value="RASS: +3">RASS +3</option>
+                    <option value="RASS: +2">RASS +2</option>
+                    <option value="RASS: +1">RASS +1</option>
+                    <option value="RASS: 0">RASS 0</option>
+                    <option value="RASS: -1">RASS -1</option>
+                    <option value="RASS: -2">RASS -2</option>
+                    <option value="RASS: -3">RASS -3</option>
+                    <option value="RASS: -4">RASS -4</option>
+                    <option value="RASS: -5">RASS -5</option>
+                  </select>
+                )}
+              </div>
             </div>
+
+            {/* Linha 2: Pupila + Padrão Respiratório */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Pupila</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Isocórica / Fotorreagente"
+                  value={patient.checklistPup || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistPup: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Padrão Respiratório</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Eupneico / Sem alterações"
+                  value={patient.checklistResp || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistResp: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                />
+              </div>
+            </div>
+
+            {/* Linha 3: Déficit Motor */}
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Déficit Motor</label>
+              <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Déficit Motor</label>
               <input
                 type="text"
-                placeholder="Hemiparesia E / Sem déficit..."
+                placeholder="Ex: Hemiparesia D (MSD FM 3/5) / Sem déficit"
                 value={patient.checklistMotor || ''}
                 onChange={(e) => updatePatient({ ...patient, checklistMotor: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                className={`w-full px-2.5 py-1.5 bg-white border border-blue-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
               />
             </div>
           </div>
         </div>
 
-        {/* CARD 2: TERAPÊUTICA & MEDICAÇÕES */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
-          <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
-            <Pill size={14} className="text-blue-600" />
-            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Terapêutica & Medicações</span>
-          </div>
+        {/* QUADRO SUPERIOR 2: TERAPÊUTICA & MEDICAÇÕES (Verde claro discreto) */}
+        <div className="bg-emerald-50/45 p-3 rounded-xl border border-emerald-200/80 shadow-2xs flex flex-col justify-between h-full text-left">
+          {(() => {
+            const rawText = patient.checklistAntibioticoText || '';
+            const abxList = rawText.includes('\n') ? rawText.split('\n') : [rawText];
+            const displayList = abxList.length > 0 ? abxList : [''];
 
-          {/* ANTIBIÓTICO */}
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Antibioticoterapia</label>
-            <div className="space-y-1.5">
-              <div className="flex gap-1.5 items-center">
-                <div className="flex gap-1 w-2/5 shrink-0">
-                  {['Sim', 'Não'].map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => updatePatient({ ...patient, checklistAntibiotico: patient.checklistAntibiotico === opt ? '' : (opt as any) })}
-                      className={`flex-1 py-1.5 rounded-xl text-[10px] font-black border transition-all ${
-                        patient.checklistAntibiotico === opt
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100'
-                          : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-                      }`}
-                    >
-                      {opt.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-                {patient.checklistAntibiotico === 'Não' && (
-                  <span className="text-[10px] text-slate-400 font-bold italic ml-1">Sem indicação no momento</span>
-                )}
-              </div>
+            const handleAbxDayChange = (index: number, newDay: string) => {
+              const currentParsed = parseAbxLine(displayList[index]);
+              const formatted = formatAbxLine(newDay, currentParsed.name);
+              const newList = [...displayList];
+              newList[index] = formatted;
+              updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n'), checklistAntibiotico: 'Sim' });
+            };
 
-              {patient.checklistAntibiotico !== 'Não' && (() => {
-                const rawText = patient.checklistAntibioticoText || '';
-                const abxList = rawText.includes('\n') ? rawText.split('\n') : [rawText];
-                const displayList = abxList.length > 0 ? abxList : [''];
+            const handleAbxNameChange = (index: number, newName: string) => {
+              const currentParsed = parseAbxLine(displayList[index]);
+              const formatted = formatAbxLine(currentParsed.day, newName);
+              const newList = [...displayList];
+              newList[index] = formatted;
+              updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n'), checklistAntibiotico: 'Sim' });
+            };
 
-                const handleAbxDayChange = (index: number, newDay: string) => {
-                  const currentParsed = parseAbxLine(displayList[index]);
-                  const formatted = formatAbxLine(newDay, currentParsed.name);
-                  const newList = [...displayList];
-                  newList[index] = formatted;
-                  updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n'), checklistAntibiotico: 'Sim' });
-                };
+            const handleAddAbx = () => {
+              const newList = [...displayList, 'Dia 1 - '];
+              updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n'), checklistAntibiotico: 'Sim' });
+            };
 
-                const handleAbxNameChange = (index: number, newName: string) => {
-                  const currentParsed = parseAbxLine(displayList[index]);
-                  const formatted = formatAbxLine(currentParsed.day, newName);
-                  const newList = [...displayList];
-                  newList[index] = formatted;
-                  updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n'), checklistAntibiotico: 'Sim' });
-                };
+            const handleRemoveAbx = (index: number) => {
+              const newList = displayList.filter((_, i) => i !== index);
+              updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n') });
+            };
 
-                const handleAddAbx = () => {
-                  const newList = [...displayList, 'Dia 1 - '];
-                  updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n'), checklistAntibiotico: 'Sim' });
-                };
-
-                const handleRemoveAbx = (index: number) => {
-                  const newList = displayList.filter((_, i) => i !== index);
-                  updatePatient({ ...patient, checklistAntibioticoText: newList.join('\n') });
-                };
-
-                return (
-                  <div className="space-y-1.5 mt-1">
-                    {displayList.map((abx, idx) => {
-                      const parsed = parseAbxLine(abx);
-                      return (
-                        <div key={idx} className="flex gap-1.5 items-center">
-                          <input
-                            type="number"
-                            min={0}
-                            max={31}
-                            placeholder="Dia (0-31)"
-                            value={parsed.day}
-                            onChange={(e) => handleAbxDayChange(idx, e.target.value)}
-                            className={`w-24 shrink-0 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Nome do antibiótico (Ex: Rocefin)"
-                            value={parsed.name}
-                            onChange={(e) => handleAbxNameChange(idx, e.target.value)}
-                            className={`flex-1 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-                          />
-                          {displayList.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveAbx(idx)}
-                              title="Remover este antibiótico"
-                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shrink-0"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
+            return (
+              <>
+                <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-emerald-200/60 shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <Pill size={14} className="text-emerald-600" />
+                    <span className="text-xs font-black text-emerald-800 uppercase tracking-wider">Terapêutica & Medicações</span>
+                  </div>
+                  {patient.checklistAntibiotico !== 'Não' && (
                     <button
                       type="button"
                       onClick={handleAddAbx}
-                      className="flex items-center gap-1 text-[10px] font-black text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/80 px-2.5 py-1 rounded-xl transition-all border border-blue-200/60 shadow-xs"
+                      className="flex items-center gap-1 text-[10px] font-black text-emerald-700 hover:text-emerald-800 bg-white hover:bg-emerald-100 px-2 py-0.5 rounded-md transition-all border border-emerald-200"
                     >
-                      <Plus size={12} />
-                      <span>+ Adicionar antibiótico</span>
+                      <Plus size={11} />
+                      <span>+ ATB</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex-1 flex flex-col justify-between gap-2">
+                  {/* Linha 1: Antibiótico em Uso (Sim/Não + Qual ATB + Dia na mesma linha) */}
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Antibiótico em Uso</label>
+                    <div className="space-y-1 max-h-20 overflow-y-auto pr-0.5 custom-scrollbar">
+                      {patient.checklistAntibiotico === 'Não' ? (
+                        <div className="flex items-center gap-2">
+                          <div className="flex bg-white p-0.5 rounded-lg border border-emerald-200 shrink-0">
+                            {['Sim', 'Não'].map((opt) => (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => updatePatient({ ...patient, checklistAntibiotico: patient.checklistAntibiotico === opt ? '' : (opt as any) })}
+                                className={`px-2.5 py-1 rounded-md text-[10px] font-black transition-all ${
+                                  patient.checklistAntibiotico === opt
+                                    ? opt === 'Sim'
+                                      ? 'bg-blue-600 text-white shadow-2xs'
+                                      : 'bg-red-600 text-white shadow-2xs'
+                                    : 'text-slate-500 hover:text-slate-800'
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                          <span className="text-xs text-slate-400 font-bold italic">Sem antibiótico em uso</span>
+                        </div>
+                      ) : (
+                        displayList.map((abx, idx) => {
+                          const parsed = parseAbxLine(abx);
+                          return (
+                            <div key={idx} className="flex items-center gap-1.5">
+                              {idx === 0 && (
+                                <div className="flex bg-white p-0.5 rounded-lg border border-emerald-200 shrink-0">
+                                  {['Sim', 'Não'].map((opt) => (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() => updatePatient({ ...patient, checklistAntibiotico: patient.checklistAntibiotico === opt ? '' : (opt as any) })}
+                                      className={`px-2 py-1 rounded-md text-[10px] font-black transition-all ${
+                                        patient.checklistAntibiotico === opt
+                                          ? opt === 'Sim'
+                                            ? 'bg-blue-600 text-white shadow-2xs'
+                                            : 'bg-red-600 text-white shadow-2xs'
+                                          : 'text-slate-500 hover:text-slate-800'
+                                      }`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                              <input
+                                type="text"
+                                placeholder="Qual antibiótico? (Ex: Ceftriaxona)"
+                                value={parsed.name}
+                                onChange={(e) => handleAbxNameChange(idx, e.target.value)}
+                                className={`flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-emerald-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                              />
+                              <input
+                                type="number"
+                                min={0}
+                                max={31}
+                                placeholder="Dia"
+                                value={parsed.day}
+                                onChange={(e) => handleAbxDayChange(idx, e.target.value)}
+                                className={`w-16 shrink-0 px-1.5 py-1.5 bg-white border border-emerald-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                              />
+                              {displayList.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveAbx(idx)}
+                                  title="Remover este antibiótico"
+                                  className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all shrink-0"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Linha 2: Antiagregante Plaquetário */}
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Antiagregante Plaquetário</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: AAS 100mg VO, Clopidogrel 75mg..."
+                      value={patient.checklistAntiagregante || ''}
+                      onChange={(e) => updatePatient({ ...patient, checklistAntiagregante: e.target.value })}
+                      className={`w-full px-2.5 py-1.5 bg-white border border-emerald-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                    />
+                  </div>
+
+                  {/* Linha 3: Anticoagulante / Profilaxia TEV */}
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Anticoagulante / Profilaxia TEV</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Enoxaparina 40mg SC 1x/dia, HNF..."
+                      value={patient.checklistAnticoagulante || ''}
+                      onChange={(e) => updatePatient({ ...patient, checklistAnticoagulante: e.target.value })}
+                      className={`w-full px-2.5 py-1.5 bg-white border border-emerald-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                    />
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+
+        {/* QUADRO SUPERIOR 3: SUPORTE VENTILATÓRIO & DROGAS (Mesmo tamanho horizontal e vertical) */}
+        <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between h-full text-left">
+          <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-slate-100 shrink-0">
+            <div className="flex items-center gap-1.5">
+              <Activity size={14} className="text-indigo-600" />
+              <span className="text-xs font-black text-indigo-700 uppercase tracking-wider">Suporte Ventilatório & Drogas</span>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col justify-between gap-2">
+            {/* Linha 1: Sedação e Analgesia lado a lado */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider leading-none">Sedação</span>
+                    <button
+                      type="button"
+                      onClick={handleRefreshSedacao}
+                      title="Atualizar com as infusões ativas"
+                      className="text-indigo-600 hover:text-indigo-800 p-0.5 rounded hover:bg-indigo-50 transition-colors"
+                    >
+                      <RefreshCw size={10} />
                     </button>
                   </div>
-                );
-              })()}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Antiagregante</label>
-              <input
-                type="text"
-                placeholder="Qual / Dose / Horário"
-                value={patient.checklistAntiagregante || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistAntiagregante: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Anticoagulante</label>
-              <input
-                type="text"
-                placeholder="Qual / Dose / Horário"
-                value={patient.checklistAnticoagulante || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistAnticoagulante: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* CARD 3: CONDUTAS, PLANTONISTA & APAGAR COLUNA */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
-          <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
-            <AlertCircle size={14} className="text-blue-600" />
-            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Condutas & Plantonista</span>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Condutas</label>
-            <textarea
-              placeholder="Descreva pendências, intercorrências e condutas do dia..."
-              value={patient.checklistCondutas || ''}
-              onChange={(e) => updatePatient({ ...patient, checklistCondutas: e.target.value })}
-              rows={4}
-              className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 custom-scrollbar ${theme.ringColor}`}
-            />
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Médico Plantonista</label>
-            <input
-              type="text"
-              placeholder="Dr(a). Nome do Médico"
-              value={patient.checklistMedicoPlantonista || ''}
-              onChange={(e) => updatePatient({ ...patient, checklistMedicoPlantonista: e.target.value })}
-              className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-            />
-          </div>
-
-          {/* BOTÃO PARA APAGAR INFORMAÇÕES DESTA COLUNA */}
-          <div className="pt-1 flex flex-col items-center gap-2">
-            {!isConfirmingClearColumn ? (
-              <button
-                type="button"
-                onClick={() => setIsConfirmingClearColumn(true)}
-                className="w-full py-2 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/80 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-[0.99]"
-              >
-                <Trash2 size={13} className="text-red-600 shrink-0" />
-                <span>Limpar dados da Coluna {activeIndex + 1}</span>
-              </button>
-            ) : (
-              <div className="w-full p-2.5 bg-red-50 border border-red-200 rounded-xl flex flex-col items-center justify-between gap-2 animate-in fade-in duration-200 shadow-sm">
-                <div className="flex items-center gap-1.5 text-red-950 text-xs font-bold text-center">
-                  <AlertCircle size={15} className="text-red-600 shrink-0" />
-                  <span>Apagar dados da <strong>Coluna {activeIndex + 1}</strong>?</span>
+                  <div className="flex bg-slate-100 p-0.5 rounded border border-slate-200">
+                    {['Sim', 'Não'].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => updatePatient({ ...patient, checklistSedacao: patient.checklistSedacao === opt ? '' : (opt as any) })}
+                        className={`px-1.5 py-0.2 rounded text-[9px] font-black transition-all ${
+                          patient.checklistSedacao === opt
+                            ? opt === 'Sim'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-red-600 text-white'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 w-full">
-                  <button
-                    type="button"
-                    onClick={handleClearCurrentColumn}
-                    className="flex-1 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
-                  >
-                    Sim, apagar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsConfirmingClearColumn(false)}
-                    className="flex-1 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* COLUNA 2: SUPORTE INTENSIVO & CUIDADOS CLÍNICOS */}
-      <div className="space-y-3">
-        {/* CARD 1: SUPORTE VENTILATÓRIO E DROGAS */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
-          <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
-            <Activity size={14} className="text-blue-600" />
-            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Suporte Ventilatório & Drogas</span>
-          </div>
-
-          {/* SEDAÇÃO */}
-          <div>
-            <div className="flex items-center justify-between mb-1 ml-1 pr-1">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Sedação</label>
-              <button
-                type="button"
-                onClick={handleRefreshSedacao}
-                title="Atualizar dose com as infusões ativas deste momento"
-                className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded-lg transition-colors border border-blue-200/60 shadow-xs"
-              >
-                <RefreshCw size={10} className="shrink-0" />
-                <span>Atualizar</span>
-              </button>
-            </div>
-            <div className="flex gap-1.5 mb-1.5">
-              {['Sim', 'Não'].map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => updatePatient({ ...patient, checklistSedacao: patient.checklistSedacao === opt ? '' : (opt as any) })}
-                  className={`flex-1 py-1.5 rounded-xl text-[10px] font-black border transition-all ${
-                    patient.checklistSedacao === opt
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                      : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-                  }`}
-                >
-                  {opt.toUpperCase()}
-                </button>
-              ))}
-            </div>
-            <input
-              type="text"
-              placeholder="Fármaco / Dose / RASS meta"
-              value={patient.checklistSedacaoText || ''}
-              onChange={(e) => updatePatient({ ...patient, checklistSedacaoText: e.target.value })}
-              className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-            />
-          </div>
-
-          {/* ANALGESIA */}
-          <div>
-            <div className="flex items-center justify-between mb-1 ml-1 pr-1">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Analgesia</label>
-              <button
-                type="button"
-                onClick={handleRefreshAnalgesia}
-                title="Atualizar dose com as infusões ativas deste momento"
-                className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded-lg transition-colors border border-blue-200/60 shadow-xs"
-              >
-                <RefreshCw size={10} className="shrink-0" />
-                <span>Atualizar</span>
-              </button>
-            </div>
-            <div className="flex gap-1.5 mb-1.5">
-              {['Sim', 'Não'].map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => updatePatient({ ...patient, checklistAnalgesia: patient.checklistAnalgesia === opt ? '' : (opt as any) })}
-                  className={`flex-1 py-1.5 rounded-xl text-[10px] font-black border transition-all ${
-                    patient.checklistAnalgesia === opt
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                      : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-                  }`}
-                >
-                  {opt.toUpperCase()}
-                </button>
-              ))}
-            </div>
-            <input
-              type="text"
-              placeholder="Fármaco / Dose / Escala de Dor"
-              value={patient.checklistAnalgesiaText || ''}
-              onChange={(e) => updatePatient({ ...patient, checklistAnalgesiaText: e.target.value })}
-              className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-            />
-          </div>
-
-          {/* DRUG VASOATIVAS (DVA) */}
-          <div>
-            <div className="flex items-center justify-between mb-1 ml-1 pr-1">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Drogas Vasoativas (DVA)</label>
-              <button
-                type="button"
-                onClick={handleRefreshDva}
-                title="Atualizar dose com as infusões ativas deste momento"
-                className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded-lg transition-colors border border-blue-200/60 shadow-xs"
-              >
-                <RefreshCw size={10} className="shrink-0" />
-                <span>Atualizar</span>
-              </button>
-            </div>
-            <div className="flex gap-1.5 mb-1.5">
-              {['Sim', 'Não', 'NDA'].map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => updatePatient({ ...patient, checklistDva: patient.checklistDva === opt ? '' : (opt as any) })}
-                  className={`flex-1 py-1.5 rounded-xl text-[10px] font-black border transition-all ${
-                    patient.checklistDva === opt
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                      : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-            <input
-              type="text"
-              placeholder="Fármaco / Vasopressor / Vazão / Alvo de PAM"
-              value={patient.checklistDvaText || ''}
-              onChange={(e) => updatePatient({ ...patient, checklistDvaText: e.target.value })}
-              className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-            />
-          </div>
-
-          {/* BLOQUEADOR NEUROMUSCULAR */}
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Bloqueador Neuromuscular</label>
-            <input
-              type="text"
-              placeholder="Qual / Dose / Observações"
-              value={patient.checklistBloqueadorNeuromuscular || ''}
-              onChange={(e) => updatePatient({ ...patient, checklistBloqueadorNeuromuscular: e.target.value })}
-              className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-            />
-          </div>
-
-          {/* VENTILAÇÃO */}
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Ventilação (Selecione um ou mais)</label>
-            <div className="grid grid-cols-3 gap-1 mb-1.5">
-              {[
-                { id: 'ar_ambiente', label: 'Ar Ambiente' },
-                { id: 'venturi', label: 'Venturi' },
-                { id: 'canula_nasal', label: 'Cânula Nasal' },
-                { id: 'ventilacao_mecanica', label: 'VM' },
-                { id: 'tot', label: 'TOT' },
-                { id: 'tqt', label: 'TQT' }
-              ].map((opt) => {
-                const isSelected = (patient.checklistVentilacao || []).includes(opt.id);
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => {
-                      const current = patient.checklistVentilacao || [];
-                      const updated = isSelected 
-                        ? current.filter(x => x !== opt.id) 
-                        : [...current, opt.id];
-                      updatePatient({ ...patient, checklistVentilacao: updated });
-                    }}
-                    className={`py-1.5 px-1 rounded-xl text-[10px] font-black border transition-all text-center leading-tight ${
-                      isSelected
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100'
-                        : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-                    }`}
-                  >
-                    {opt.label.toUpperCase()}
-                  </button>
-                );
-              })}
-            </div>
-            <input
-              type="text"
-              placeholder="Observação / Outros Parâmetros"
-              value={patient.checklistVentilacaoOutros || ''}
-              onChange={(e) => updatePatient({ ...patient, checklistVentilacaoOutros: e.target.value })}
-              className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-            />
-          </div>
-
-          {/* DIAS DE VM E DESMAME */}
-          <div className="grid grid-cols-2 gap-2 pt-0.5">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Dias de VM</label>
-              <input
-                type="number"
-                placeholder="Nº dias"
-                value={patient.checklistDiasVm || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistDiasVm: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Desmame VM ou O2</label>
-              <div className="flex gap-1">
-                {['Sim', 'Não', 'N/A'].map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => updatePatient({ ...patient, checklistDesmameVm: patient.checklistDesmameVm === opt ? '' : (opt as any) })}
-                    className={`flex-1 py-1.5 rounded-xl text-[10px] font-black border transition-all ${
-                      patient.checklistDesmameVm === opt
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100'
-                        : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-                    }`}
-                  >
-                    {opt.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* CARD 2: HEMODINÂMICA, LINHAS & CUIDADOS CLÍNICOS */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
-          <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
-            <Stethoscope size={14} className="text-blue-600" />
-            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Hemodinâmica & Cuidados</span>
-          </div>
-
-          {/* PAS x PAD */}
-          <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-1.5">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">PAS x PAD (Valores do Dia)</span>
-            <div>
-              <label className="block text-[8px] font-black text-slate-400 uppercase mb-0.5 ml-1">PAS - Pressão Arterial Sistólica</label>
-              <input
-                type="text"
-                placeholder="PAS (Ex: 110 mmHg)"
-                value={patient.checklistPas || ''}
-                onChange={(e) => {
-                  const newPas = e.target.value;
-                  const combined = newPas || patient.checklistPad ? `${newPas || ''} x ${patient.checklistPad || ''}` : '';
-                  updatePatient({ ...patient, checklistPas: newPas, checklistPasPad: combined });
-                }}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-            </div>
-            <div>
-              <label className="block text-[8px] font-black text-slate-400 uppercase mb-0.5 ml-1">PAD - Pressão Arterial Diastólica</label>
-              <input
-                type="text"
-                placeholder="PAD (Ex: 70 mmHg)"
-                value={patient.checklistPad || ''}
-                onChange={(e) => {
-                  const newPad = e.target.value;
-                  const combined = patient.checklistPas || newPad ? `${patient.checklistPas || ''} x ${newPad || ''}` : '';
-                  updatePatient({ ...patient, checklistPad: newPad, checklistPasPad: combined });
-                }}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-            </div>
-          </div>
-
-          {/* FEBRE */}
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Febre</label>
-            <div className="flex gap-1.5">
-              <div className="flex gap-1 w-1/2">
-                {['Sim', 'Não'].map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => updatePatient({ ...patient, checklistFebre: patient.checklistFebre === opt ? '' : (opt as any) })}
-                    className={`flex-1 py-1.5 rounded-xl text-[10px] font-black border transition-all ${
-                      patient.checklistFebre === opt
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100'
-                        : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-                    }`}
-                  >
-                    {opt.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              <input
-                type="text"
-                placeholder="Ex: >37.8 °C"
-                value={patient.checklistFebreTemp || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistFebreTemp: e.target.value })}
-                className={`w-1/2 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-            </div>
-          </div>
-
-          {/* CONTROLE GLICÊMICO (HGT) */}
-          <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-1.5">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Controle Glicêmico (HGT)</span>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[8px] font-black text-slate-400 uppercase mb-0.5 ml-1">Maior HGT &gt;</label>
                 <input
-                  type="number"
-                  placeholder="Max"
-                  value={patient.checklistHgtMaior || ''}
-                  onChange={(e) => updatePatient({ ...patient, checklistHgtMaior: e.target.value })}
-                  className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  type="text"
+                  placeholder="Fármaco / Dose / RASS"
+                  value={patient.checklistSedacaoText || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistSedacaoText: e.target.value })}
+                  className={`w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
                 />
               </div>
+
               <div>
-                <label className="block text-[8px] font-black text-slate-400 uppercase mb-0.5 ml-1">Menor HGT &lt;</label>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider leading-none">Analgesia</span>
+                    <button
+                      type="button"
+                      onClick={handleRefreshAnalgesia}
+                      title="Atualizar com as infusões ativas"
+                      className="text-indigo-600 hover:text-indigo-800 p-0.5 rounded hover:bg-indigo-50 transition-colors"
+                    >
+                      <RefreshCw size={10} />
+                    </button>
+                  </div>
+                  <div className="flex bg-slate-100 p-0.5 rounded border border-slate-200">
+                    {['Sim', 'Não'].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => updatePatient({ ...patient, checklistAnalgesia: patient.checklistAnalgesia === opt ? '' : (opt as any) })}
+                        className={`px-1.5 py-0.2 rounded text-[9px] font-black transition-all ${
+                          patient.checklistAnalgesia === opt
+                            ? opt === 'Sim'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-red-600 text-white'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Fármaco / Dose"
+                  value={patient.checklistAnalgesiaText || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistAnalgesiaText: e.target.value })}
+                  className={`w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                />
+              </div>
+            </div>
+
+            {/* Linha 2: DVA + BNM + Desmame */}
+            <div className="grid grid-cols-12 gap-2 items-end">
+              <div className="col-span-5">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider leading-none">DVA</span>
+                    <button
+                      type="button"
+                      onClick={handleRefreshDva}
+                      title="Atualizar com as infusões ativas"
+                      className="text-indigo-600 hover:text-indigo-800 p-0.5 rounded hover:bg-indigo-50 transition-colors"
+                    >
+                      <RefreshCw size={10} />
+                    </button>
+                  </div>
+                  <div className="flex bg-slate-100 p-0.5 rounded border border-slate-200">
+                    {['Sim', 'Não', 'NDA'].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => updatePatient({ ...patient, checklistDva: patient.checklistDva === opt ? '' : (opt as any) })}
+                        className={`px-1 py-0.2 rounded text-[8.5px] font-black transition-all ${
+                          patient.checklistDva === opt
+                            ? opt === 'Sim'
+                              ? 'bg-blue-600 text-white'
+                              : opt === 'Não'
+                                ? 'bg-red-600 text-white'
+                                : 'bg-indigo-600 text-white'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Droga / Vazão / PAM"
+                  value={patient.checklistDvaText || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistDvaText: e.target.value })}
+                  className={`w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                />
+              </div>
+
+              <div className="col-span-4">
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-none">BNM (Bloqueador)</label>
+                <input
+                  type="text"
+                  placeholder="Qual / Dose"
+                  value={patient.checklistBloqueadorNeuromuscular || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistBloqueadorNeuromuscular: e.target.value })}
+                  className={`w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                />
+              </div>
+
+              <div className="col-span-3">
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-none text-center">Desmame</label>
+                <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                  {['Sim', 'Não', 'N/A'].map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => updatePatient({ ...patient, checklistDesmameVm: patient.checklistDesmameVm === opt ? '' : (opt as any) })}
+                      className={`flex-1 py-1 rounded-md text-[9px] font-black transition-all ${
+                        patient.checklistDesmameVm === opt
+                          ? opt === 'Sim'
+                            ? 'bg-blue-600 text-white shadow-2xs'
+                            : opt === 'Não'
+                              ? 'bg-red-600 text-white shadow-2xs'
+                              : 'bg-indigo-600 text-white shadow-2xs'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Linha 3: Ventilação (2 linhas com 3 itens em cada) + Parâmetros + Dias VM */}
+            <div className="grid grid-cols-12 gap-2 items-center pt-1.5 border-t border-slate-100">
+              <div className="col-span-6 grid grid-cols-3 gap-1">
+                {[
+                  { id: 'ar_ambiente', label: 'A.A.' },
+                  { id: 'venturi', label: 'M.V.' },
+                  { id: 'canula_nasal', label: 'C.N.' },
+                  { id: 'ventilacao_mecanica', label: 'VM' },
+                  { id: 'tot', label: 'TOT' },
+                  { id: 'tqt', label: 'TQT' }
+                ].map((opt) => {
+                  const isSelected = (patient.checklistVentilacao || []).includes(opt.id);
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        const current = patient.checklistVentilacao || [];
+                        const updated = isSelected
+                          ? current.filter(x => x !== opt.id)
+                          : [...current, opt.id];
+                        updatePatient({ ...patient, checklistVentilacao: updated });
+                      }}
+                      className={`py-1 px-1.5 rounded-md text-[10px] font-black border text-center transition-all ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="col-span-4">
+                <label className="block text-[9.5px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-none">Obs / Parâmetros</label>
+                <input
+                  type="text"
+                  placeholder="Obs / Parâm."
+                  value={patient.checklistVentilacaoOutros || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistVentilacaoOutros: e.target.value })}
+                  className={`w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label className="block text-[9.5px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-none text-center">Dias VM</label>
                 <input
                   type="number"
-                  placeholder="Min"
-                  value={patient.checklistHgtMenor || ''}
-                  onChange={(e) => updatePatient({ ...patient, checklistHgtMenor: e.target.value })}
-                  className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  placeholder="Dias"
+                  title="Dias de Ventilação Mecânica"
+                  value={patient.checklistDiasVm || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistDiasVm: e.target.value })}
+                  className={`w-full px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
                 />
               </div>
             </div>
           </div>
+        </div>
 
-          {/* ACESSO VENOSO */}
-          <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-1.5">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Acesso Venoso</span>
+      </div>
+
+      {/* =====================================================================
+          LINHA INFERIOR: 3 QUADROS ALINHADOS COM OS 3 DE CIMA
+          1) HEMODINÂMICA & CUIDADOS (Vermelho claro discreto)
+          2) LABORATÓRIO & EXAMES (Roxo claro discreto + Gasometria em quadro cinza embaixo)
+          3) CONDUTAS & PLANTONISTA (Direita — amplo espaço sem rolagem)
+         ===================================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5 items-stretch">
+
+        {/* QUADRO INFERIOR 1 (Esquerda): HEMODINÂMICA & CUIDADOS */}
+        <div className="bg-rose-50/45 p-3 rounded-xl border border-rose-200/80 shadow-2xs flex flex-col justify-between h-full text-left">
+          <div className="flex items-center gap-1.5 pb-1.5 mb-2 border-b border-rose-200/60 shrink-0">
+            <Stethoscope size={14} className="text-rose-600" />
+            <span className="text-xs font-black text-rose-800 uppercase tracking-wider">Hemodinâmica & Cuidados</span>
+          </div>
+
+          <div className="flex-1 flex flex-col justify-between gap-2">
+            {/* Linha 1: PAS | PAD | HGT (Máx / Mín) lado a lado sem setas de número */}
+            <div className="grid grid-cols-3 gap-2 bg-white/70 p-2 rounded-lg border border-rose-200/70">
+              <div>
+                <label className="block text-[9.5px] font-black text-rose-800 uppercase tracking-wider mb-1 text-center leading-none">PAS (Sistólica)</label>
+                <input
+                  type="text"
+                  placeholder="Ex: 110-140"
+                  value={patient.checklistPas || ''}
+                  onChange={(e) => {
+                    const newPas = e.target.value;
+                    const combined = newPas || patient.checklistPad ? `${newPas || ''} x ${patient.checklistPad || ''}` : '';
+                    updatePatient({ ...patient, checklistPas: newPas, checklistPasPad: combined });
+                  }}
+                  className={`w-full px-2 py-1 bg-white border border-rose-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[9.5px] font-black text-rose-800 uppercase tracking-wider mb-1 text-center leading-none">PAD (Diastólica)</label>
+                <input
+                  type="text"
+                  placeholder="Ex: 70-90"
+                  value={patient.checklistPad || ''}
+                  onChange={(e) => {
+                    const newPad = e.target.value;
+                    const combined = patient.checklistPas || newPad ? `${patient.checklistPas || ''} x ${newPad || ''}` : '';
+                    updatePatient({ ...patient, checklistPad: newPad, checklistPasPad: combined });
+                  }}
+                  className={`w-full px-2 py-1 bg-white border border-rose-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[9.5px] font-black text-rose-800 uppercase tracking-wider mb-1 text-center leading-none">HGT (Máx / Mín)</label>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="Máx"
+                    value={patient.checklistHgtMaior || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistHgtMaior: e.target.value })}
+                    className={`w-full px-1 py-1 bg-white border border-rose-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  />
+                  <span className="text-xs text-slate-400 font-bold">/</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="Mín"
+                    value={patient.checklistHgtMenor || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistHgtMenor: e.target.value })}
+                    className={`w-full px-1 py-1 bg-white border border-rose-200 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Linha 2: Febre + BH 24h + Diurese */}
+            <div className="grid grid-cols-12 gap-2 items-end">
+              <div className="col-span-6">
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Febre / Temperatura</label>
+                <div className="flex items-center gap-1">
+                  <div className="flex bg-white p-0.5 rounded-lg border border-rose-200 shrink-0">
+                    {['Sim', 'Não'].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => updatePatient({ ...patient, checklistFebre: patient.checklistFebre === opt ? '' : (opt as any) })}
+                        className={`px-2 py-1 rounded-md text-[9.5px] font-black transition-all ${
+                          patient.checklistFebre === opt
+                            ? opt === 'Sim'
+                              ? 'bg-blue-600 text-white shadow-2xs'
+                              : 'bg-red-600 text-white shadow-2xs'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Ex: 38.2 °C"
+                    value={patient.checklistFebreTemp || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistFebreTemp: e.target.value })}
+                    className={`w-full px-2 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  />
+                </div>
+              </div>
+
+              <div className="col-span-3">
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">BH (24h)</label>
+                <input
+                  type="text"
+                  placeholder="+450 ml"
+                  value={patient.checklistBalançoHidrico || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistBalançoHidrico: e.target.value })}
+                  className={`w-full px-2 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                />
+              </div>
+
+              <div className="col-span-3">
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Diurese</label>
+                <input
+                  type="text"
+                  placeholder="1500 ml"
+                  value={patient.checklistDiurese || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistDiurese: e.target.value })}
+                  className={`w-full px-2 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                />
+              </div>
+            </div>
+
+            {/* Linha 3: Acesso Venoso + Dieta */}
             <div className="grid grid-cols-2 gap-2">
-              <input
-                type="text"
-                placeholder="Local (Ex: CVC Subclávia D)"
-                value={patient.checklistAcessoLocal || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistAcessoLocal: e.target.value })}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-              <input
-                type="number"
-                placeholder="Dia do acesso"
-                value={patient.checklistAcessoDia || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistAcessoDia: e.target.value })}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-            </div>
-          </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Acesso Venoso (Local / Dia)</label>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    placeholder="Local (Ex: AVP MSE)"
+                    value={patient.checklistAcessoLocal || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistAcessoLocal: e.target.value })}
+                    className={`flex-1 min-w-0 px-2 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Dia"
+                    value={patient.checklistAcessoDia || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistAcessoDia: e.target.value })}
+                    className={`w-14 shrink-0 px-1.5 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                  />
+                </div>
+              </div>
 
-          {/* DIETA */}
-          <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-1.5">
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Dieta</span>
-              <div className="flex gap-1.5 w-24 shrink-0">
-                {['Sim', 'Não'].map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => updatePatient({ ...patient, checklistDieta: patient.checklistDieta === opt ? '' : (opt as any) })}
-                    className={`flex-1 py-0.5 rounded-lg text-[9px] font-black border transition-all ${
-                      patient.checklistDieta === opt
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                        : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                    }`}
-                  >
-                    {opt.toUpperCase()}
-                  </button>
-                ))}
+              <div>
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Dieta</label>
+                <div className="flex items-center gap-1">
+                  <div className="flex bg-white p-0.5 rounded-lg border border-rose-200 shrink-0">
+                    {['Sim', 'Não'].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => updatePatient({ ...patient, checklistDieta: patient.checklistDieta === opt ? '' : (opt as any) })}
+                        className={`px-2 py-1 rounded-md text-[9.5px] font-black transition-all ${
+                          patient.checklistDieta === opt
+                            ? opt === 'Sim'
+                              ? 'bg-blue-600 text-white shadow-2xs'
+                              : 'bg-red-600 text-white shadow-2xs'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Tipo (SNE, Oral...)"
+                    value={patient.checklistDietaTipo || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistDietaTipo: e.target.value })}
+                    className={`flex-1 min-w-0 px-2 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  />
+                </div>
               </div>
             </div>
-            <div>
-              <input
-                type="text"
-                placeholder="Tipo da Dieta (Ex: Enteral 1.5kcal / Oral branda)"
-                value={patient.checklistDietaTipo || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistDietaTipo: e.target.value })}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-            </div>
-          </div>
 
-          {/* BALANÇO HÍDRICO & DIURESE */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Balanço Hídrico (24h)</label>
-              <input
-                type="text"
-                placeholder="Ex: +450 ml / -200 ml"
-                value={patient.checklistBalançoHidrico || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistBalançoHidrico: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1 leading-none">Diurese</label>
-              <input
-                type="text"
-                placeholder="Ex: 1500 ml"
-                value={patient.checklistDiurese || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistDiurese: e.target.value })}
-                className={`w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-            </div>
-          </div>
-
-          {/* EVACUAÇÕES */}
-          <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-1.5">
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Evacuações</span>
-              <div className="flex gap-1.5 w-24 shrink-0">
-                {['Sim', 'Não'].map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => updatePatient({ ...patient, checklistEvacuacoes: patient.checklistEvacuacoes === opt ? '' : (opt as any) })}
-                    className={`flex-1 py-0.5 rounded-lg text-[9px] font-black border transition-all ${
-                      patient.checklistEvacuacoes === opt
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                        : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                    }`}
-                  >
-                    {opt.toUpperCase()}
-                  </button>
-                ))}
+            {/* Linha 4: Evacuações + Escaras */}
+            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-rose-200/60">
+              <div>
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Evacuações</label>
+                <div className="flex items-center gap-1">
+                  <div className="flex bg-white p-0.5 rounded-lg border border-rose-200 shrink-0">
+                    {['Sim', 'Não'].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => updatePatient({ ...patient, checklistEvacuacoes: patient.checklistEvacuacoes === opt ? '' : (opt as any) })}
+                        className={`px-2 py-1 rounded-md text-[9.5px] font-black transition-all ${
+                          patient.checklistEvacuacoes === opt
+                            ? opt === 'Sim'
+                              ? 'bg-blue-600 text-white shadow-2xs'
+                              : 'bg-red-600 text-white shadow-2xs'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Aspecto / Freq."
+                    value={patient.checklistEvacuacoesAspecto || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistEvacuacoesAspecto: e.target.value })}
+                    className={`flex-1 min-w-0 px-2 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  />
+                </div>
               </div>
-            </div>
-            <input
-              type="text"
-              placeholder="Frequência / Aspecto"
-              value={patient.checklistEvacuacoesAspecto || ''}
-              onChange={(e) => updatePatient({ ...patient, checklistEvacuacoesAspecto: e.target.value })}
-              className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-            />
-          </div>
 
-          {/* ESCARAS */}
-          <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-1.5">
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Lesão por Pressão (Escaras)</span>
-              <div className="flex gap-1.5 w-24 shrink-0">
-                {['Sim', 'Não'].map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => updatePatient({ ...patient, checklistEscaras: patient.checklistEscaras === opt ? '' : (opt as any) })}
-                    className={`flex-1 py-0.5 rounded-lg text-[9px] font-black border transition-all ${
-                      patient.checklistEscaras === opt
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                        : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                    }`}
-                  >
-                    {opt.toUpperCase()}
-                  </button>
-                ))}
+              <div>
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1 leading-none">Escaras (Local / Grau)</label>
+                <div className="flex items-center gap-1">
+                  <div className="flex bg-white p-0.5 rounded-lg border border-rose-200 shrink-0">
+                    {['Sim', 'Não'].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => updatePatient({ ...patient, checklistEscaras: patient.checklistEscaras === opt ? '' : (opt as any) })}
+                        className={`px-2 py-1 rounded-md text-[9.5px] font-black transition-all ${
+                          patient.checklistEscaras === opt
+                            ? opt === 'Sim'
+                              ? 'bg-blue-600 text-white shadow-2xs'
+                              : 'bg-red-600 text-white shadow-2xs'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Local"
+                    value={patient.checklistEscarasLocal || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistEscarasLocal: e.target.value })}
+                    className={`w-1/2 min-w-0 px-1.5 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Grau"
+                    value={patient.checklistEscarasAspecto || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistEscarasAspecto: e.target.value })}
+                    className={`w-1/2 min-w-0 px-1.5 py-1 bg-white border border-rose-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                  />
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="text"
-                placeholder="Região / Local"
-                value={patient.checklistEscarasLocal || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistEscarasLocal: e.target.value })}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="Estágio / Aspecto"
-                value={patient.checklistEscarasAspecto || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistEscarasAspecto: e.target.value })}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
-              />
             </div>
           </div>
         </div>
-      </div>
 
-      {/* COLUNA 3: LABORATÓRIO & MONITORIZAÇÃO */}
-      <div className="space-y-3">
-        {/* CARD 1: EXAMES, LABS E MONITORIZAÇÃO */}
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 space-y-2.5 shadow-sm text-left">
-          <div className="flex items-center gap-1.5 pb-1.5 border-b border-slate-100">
-            <Droplets size={14} className="text-blue-600" />
-            <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Laboratório & Exames</span>
+        {/* QUADRO INFERIOR 2 (Centro): LABORATÓRIO & EXAMES (Roxo claro discreto + Gasometria em quadro cinza na linha inferior) */}
+        <div className="bg-purple-50/45 p-3 rounded-xl border border-purple-200/80 shadow-2xs flex flex-col justify-between h-full text-left">
+          <div className="flex items-center gap-1.5 pb-1.5 mb-2 border-b border-purple-200/60 shrink-0">
+            <Droplets size={14} className="text-purple-600" />
+            <span className="text-xs font-black text-purple-800 uppercase tracking-wider">Laboratório & Exames</span>
           </div>
 
-          {/* GASOMETRIA */}
-          <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-1.5">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Gasometria</span>
-            <div className="grid grid-cols-4 gap-1">
-              <input
-                type="text"
-                placeholder="pH"
-                value={patient.checklistPh || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistPh: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="PaO2"
-                value={patient.checklistPao2 || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistPao2: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="PaCO2"
-                value={patient.checklistPaco2 || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistPaco2: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="HCO3"
-                value={patient.checklistHco3 || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistHco3: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
+          <div className="flex-1 flex flex-col justify-between gap-2">
+            {/* Linha 1: Hemograma (Hb, Ht, Plaq, Leuco, Bast) + INR em 1 linha, sem placeholder */}
+            <div className="grid grid-cols-6 gap-1.5">
+              <div>
+                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Hb</label>
+                <input
+                  type="text"
+                  value={patient.checklistHb || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistHb: e.target.value })}
+                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
+              <div>
+                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Ht</label>
+                <input
+                  type="text"
+                  value={patient.checklistHt || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistHt: e.target.value })}
+                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
+              <div>
+                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Plaq</label>
+                <input
+                  type="text"
+                  value={patient.checklistPlaquetas || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistPlaquetas: e.target.value })}
+                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
+              <div>
+                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Leuco</label>
+                <input
+                  type="text"
+                  value={patient.checklistLeucograma || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistLeucograma: e.target.value })}
+                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
+              <div>
+                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Bast</label>
+                <input
+                  type="text"
+                  value={patient.checklistBastoes || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistBastoes: e.target.value })}
+                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
+              <div>
+                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">INR</label>
+                <input
+                  type="text"
+                  value={patient.checklistInr || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistInr: e.target.value })}
+                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-3 gap-1">
-              <input
-                type="text"
-                placeholder="SaO2"
-                value={patient.checklistSao2 || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistSao2: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="P/F"
-                value={patient.checklistPf || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistPf: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="S/F"
-                value={patient.checklistSf || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistSf: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-            </div>
-          </div>
 
-          {/* HEMOGRAMA */}
-          <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-1.5">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Hemograma</span>
-            <div className="grid grid-cols-3 gap-1">
-              <input
-                type="text"
-                placeholder="Hb"
-                value={patient.checklistHb || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistHb: e.target.value })}
-                className={`px-1.5 py-1 bg-white border border-slate-200 rounded-xl text-[11px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="Ht"
-                value={patient.checklistHt || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistHt: e.target.value })}
-                className={`px-1.5 py-1 bg-white border border-slate-200 rounded-xl text-[11px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="Plaquetas"
-                value={patient.checklistPlaquetas || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistPlaquetas: e.target.value })}
-                className={`px-1.5 py-1 bg-white border border-slate-200 rounded-xl text-[11px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
+            {/* Linha 2: Bioquímica (Na, K, Ureia, Creat, PCR, Trop) em 1 linha, sem placeholder */}
+            <div className="grid grid-cols-6 gap-1.5">
+              <div>
+                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Na</label>
+                <input
+                  type="text"
+                  value={patient.checklistSodio || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistSodio: e.target.value })}
+                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
+              <div>
+                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">K</label>
+                <input
+                  type="text"
+                  value={patient.checklistPotassio || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistPotassio: e.target.value })}
+                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
+              <div>
+                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Ureia</label>
+                <input
+                  type="text"
+                  value={patient.checklistUreia || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistUreia: e.target.value })}
+                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
+              <div>
+                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Creat</label>
+                <input
+                  type="text"
+                  value={patient.checklistCreatinina || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistCreatinina: e.target.value })}
+                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
+              <div>
+                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">PCR</label>
+                <input
+                  type="text"
+                  value={patient.checklistPcr || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistPcr: e.target.value })}
+                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
+              <div>
+                <label className="block text-[9.5px] font-black text-purple-900 text-center mb-0.5">Trop</label>
+                <input
+                  type="text"
+                  value={patient.checklistTroponina || ''}
+                  onChange={(e) => updatePatient({ ...patient, checklistTroponina: e.target.value })}
+                  className={`w-full px-1 py-1 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="text"
-                placeholder="Leucograma"
-                value={patient.checklistLeucograma || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistLeucograma: e.target.value })}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="Bastões"
-                value={patient.checklistBastoes || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistBastoes: e.target.value })}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-            </div>
-          </div>
 
-          {/* BIOQUÍMICA */}
-          <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-200/40 space-y-1.5">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Bioquímica</span>
-            <div className="grid grid-cols-4 gap-1">
+            {/* Linha 3: Outros Exames ocupando toda a largura */}
+            <div>
+              <label className="block text-[10px] font-black text-purple-900 uppercase tracking-wider mb-1 leading-none">Outros Exames</label>
               <input
                 type="text"
-                placeholder="INR"
-                value={patient.checklistInr || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistInr: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="Na"
-                value={patient.checklistSodio || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistSodio: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="K"
-                value={patient.checklistPotassio || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistPotassio: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="PCR"
-                value={patient.checklistPcr || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistPcr: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-1">
-              <input
-                type="text"
-                placeholder="Ureia"
-                value={patient.checklistUreia || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistUreia: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="Creat."
-                value={patient.checklistCreatinina || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistCreatinina: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-              <input
-                type="text"
-                placeholder="Trop."
-                value={patient.checklistTroponina || ''}
-                onChange={(e) => updatePatient({ ...patient, checklistTroponina: e.target.value })}
-                className={`px-1 py-1 bg-white border border-slate-200 rounded-xl text-[10px] focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 text-center ${theme.ringColor}`}
-              />
-            </div>
-            <div className="pt-0.5">
-              <input
-                type="text"
-                placeholder="Outros (bioquímica)"
                 value={patient.checklistBioquimicaOutros || ''}
                 onChange={(e) => updatePatient({ ...patient, checklistBioquimicaOutros: e.target.value })}
-                className={`w-full px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-4 transition-all font-bold text-slate-700 ${theme.ringColor}`}
+                className={`w-full px-2.5 py-1.5 bg-white border border-purple-200/80 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-700 ${theme.ringColor}`}
               />
             </div>
-          </div>
 
-          {/* OUTROS EXAMES */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="p-2 bg-slate-50/50 rounded-xl border border-slate-200/40 flex flex-col justify-between items-center gap-1">
-              <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider block">ECG Exame</span>
-              <div className="flex gap-1.5 w-full shrink-0">
-                {['Sim', 'Não'].map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => updatePatient({ ...patient, checklistEcgExame: patient.checklistEcgExame === opt ? '' : (opt as any) })}
-                    className={`flex-1 py-0.5 rounded-lg text-[8px] font-black border transition-all ${
-                      patient.checklistEcgExame === opt
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-100'
-                        : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                    }`}
-                  >
-                    {opt.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-2 bg-slate-50/50 rounded-xl border border-slate-200/40 flex flex-col justify-between items-center gap-1">
-              <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Eco / Doppler</span>
-              <div className="flex gap-1.5 w-full shrink-0">
-                {['Sim', 'Não'].map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => updatePatient({ ...patient, checklistEcoDoppler: patient.checklistEcoDoppler === opt ? '' : (opt as any) })}
-                    className={`flex-1 py-0.5 rounded-lg text-[8px] font-black border transition-all ${
-                      patient.checklistEcoDoppler === opt
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-100'
-                        : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                    }`}
-                  >
-                    {opt.toUpperCase()}
-                  </button>
-                ))}
+            {/* Linha 4 (Inferior): GASOMETRIA ARTERIAL em quadro cinza destacado */}
+            <div className="bg-slate-200/85 p-2 rounded-lg border border-slate-300 shadow-2xs">
+              <span className="block text-[10px] font-black text-slate-800 uppercase tracking-wider mb-1.5 leading-none">
+                Gasometria Arterial
+              </span>
+              <div className="grid grid-cols-7 gap-1">
+                <div>
+                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">pH</label>
+                  <input
+                    type="text"
+                    value={patient.checklistPh || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistPh: e.target.value })}
+                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">PaO2</label>
+                  <input
+                    type="text"
+                    value={patient.checklistPao2 || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistPao2: e.target.value })}
+                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">PaCO2</label>
+                  <input
+                    type="text"
+                    value={patient.checklistPaco2 || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistPaco2: e.target.value })}
+                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">HCO3</label>
+                  <input
+                    type="text"
+                    value={patient.checklistHco3 || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistHco3: e.target.value })}
+                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">SaO2</label>
+                  <input
+                    type="text"
+                    value={patient.checklistSao2 || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistSao2: e.target.value })}
+                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">P/F</label>
+                  <input
+                    type="text"
+                    value={patient.checklistPf || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistPf: e.target.value })}
+                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-slate-700 text-center mb-0.5">S/F</label>
+                  <input
+                    type="text"
+                    value={patient.checklistSf || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistSf: e.target.value })}
+                    className={`w-full px-1 py-1 bg-white border border-slate-300 rounded-md text-[11px] focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 text-center ${theme.ringColor}`}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* QUADRO INFERIOR 3 (Direita): CONDUTAS & PLANTONISTA EM DESTAQUE */}
+        <div className="bg-amber-50/20 p-3 rounded-xl border-2 border-amber-300/80 shadow-2xs flex flex-col justify-between h-full text-left">
+          <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-amber-200/80 shrink-0">
+            <div className="flex items-center gap-1.5">
+              <AlertCircle size={14} className="text-amber-700" />
+              <span className="text-xs font-black text-amber-800 uppercase tracking-wider">Condutas & Plantonista</span>
+            </div>
+            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200">
+              Plano do Dia
+            </span>
+          </div>
+
+          <div className="flex-1 flex flex-col justify-between gap-2">
+            <div className="flex-1 flex flex-col">
+              <textarea
+                placeholder="Descreva pendências, intercorrências e condutas do dia..."
+                value={patient.checklistCondutas || ''}
+                onChange={(e) => updatePatient({ ...patient, checklistCondutas: e.target.value })}
+                rows={7}
+                className={`w-full flex-1 min-h-[165px] p-2.5 bg-white border border-amber-300 rounded-lg text-xs leading-relaxed focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 resize-none custom-scrollbar ${theme.ringColor}`}
+              />
+            </div>
+
+            {/* Rodapé em 1 linha: Médico Plantonista + Limpar Coluna */}
+            <div className="pt-1.5 border-t border-amber-200/70">
+              {!isConfirmingClearColumn ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black text-amber-900 uppercase tracking-wider shrink-0">Plantonista:</span>
+                  <input
+                    type="text"
+                    placeholder="Dr(a). Nome do Médico"
+                    value={patient.checklistMedicoPlantonista || ''}
+                    onChange={(e) => updatePatient({ ...patient, checklistMedicoPlantonista: e.target.value })}
+                    className={`flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-amber-300 rounded-lg text-xs focus:outline-none focus:ring-2 transition-all font-bold text-slate-800 ${theme.ringColor}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsConfirmingClearColumn(true)}
+                    title={`Limpar dados da Coluna ${activeIndex + 1}`}
+                    className="py-1.5 px-2.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-1 shrink-0 cursor-pointer active:scale-95"
+                  >
+                    <Trash2 size={12} className="text-red-600 shrink-0" />
+                    <span>Limpar Col {activeIndex + 1}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="p-2 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold text-red-900">
+                    Apagar dados da <strong>Coluna {activeIndex + 1}</strong>?
+                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={handleClearCurrentColumn}
+                      className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-[10px] font-black uppercase transition-all cursor-pointer"
+                    >
+                      Sim, apagar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsConfirmingClearColumn(false)}
+                      className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-md text-[10px] font-black uppercase transition-all cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
-  </div>
-);
+  );
 };
